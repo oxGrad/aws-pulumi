@@ -1,0 +1,7 @@
+name: bootstrap
+description: Bootstrap pulumi state bucket
+runtime: go
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: aws-go

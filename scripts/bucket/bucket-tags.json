@@ -1,0 +1,7 @@
+{
+  "TagSet": [
+    { "Key": "Purpose", "Value": "PulumiBackend" },
+    { "Key": "ManagedBy", "Value": "Pulumi" },
+    { "Key": "Environment", "Value": "shared" }
+  ]
+}

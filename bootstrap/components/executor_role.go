@@ -26,7 +26,7 @@ func NewExecutorRole(ctx *pulumi.Context, name string, args *ExecutorRoleArgs, o
 		return nil, err
 	}
 
-	assumeRolePolicyDoc := pulumi.All(args.AWSAccountID).ApplyT(func(args []interface{}) (string, error) {
+	assumeRolePolicyDoc := pulumi.All(args.AWSAccountID).ApplyT(func(args []any) (string, error) {
 		accountID := args[0].(string)
 		doc := map[string]any{
 			"Version": "2012-10-17",

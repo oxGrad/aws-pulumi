@@ -6,4 +6,4 @@ config:
     value:
       pulumi:template: aws-go
 backend:
-  url: s3://bc-pulumi-state?region=ap-southeast-1&awssdk=v2&kmskey=alias/pulumi-state-key
+  url: s3://bc-sre-pulumi-state?region=ap-southeast-1&awssdk=v2&profile=pulumi-executor

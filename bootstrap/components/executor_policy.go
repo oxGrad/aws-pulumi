@@ -13,10 +13,15 @@ type ExecutorPolicy struct {
 }
 
 type ExecutorPolicyArgs struct {
-	BucketARN     pulumi.StringInput
-	KmsARN        pulumi.StringInput
-	RoleName      pulumi.StringInput
-	BootstrapUser pulumi.StringInput
+	BucketARN      pulumi.StringInput
+	KmsARN         pulumi.StringInput
+	RoleName       pulumi.StringInput
+	BootstrapUser  pulumi.StringInput
+	AdditionalRole *ExecutorPolicyAdditionalRole
+}
+
+type ExecutorPolicyAdditionalRole struct {
+	S3Admin bool
 }
 
 func NewExecutorPolicy(ctx *pulumi.Context, name string, args *ExecutorPolicyArgs, opts ...pulumi.ResourceOption) (*ExecutorPolicy, error) {
@@ -93,6 +98,19 @@ func NewExecutorPolicy(ctx *pulumi.Context, name string, args *ExecutorPolicyArg
 	}, pulumi.Parent(self))
 	if err != nil {
 		return nil, fmt.Errorf("error attaching policy to role: %w", err)
+	}
+
+	// Attach S3 Full Access policy to the executor role
+	if args.AdditionalRole.S3Admin {
+		s3PolicyAttachmentName := fmt.Sprintf("%v-s3-admin", name)
+		_, err = iam.NewRolePolicyAttachment(ctx, s3PolicyAttachmentName, &iam.RolePolicyAttachmentArgs{
+			Role:      args.RoleName,
+			PolicyArn: pulumi.String("arn:aws:iam::aws:policy/AmazonS3FullAccess"),
+		}, pulumi.Parent(self))
+		if err != nil {
+			return nil, fmt.Errorf("error attaching S3 admin policy to executor role: %w", err)
+		}
+
 	}
 
 	_ = ctx.RegisterResourceOutputs(self, pulumi.Map{})

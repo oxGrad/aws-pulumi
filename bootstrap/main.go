@@ -1,9 +1,8 @@
 package main
 
 import (
-	"fmt"
-
 	"bootstrap/components"
+	"fmt"
 
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
@@ -58,6 +57,9 @@ func main() {
 			KmsARN:        stateKey.KmsARN,
 			RoleName:      pulumi.String(cfg.ciRole),
 			BootstrapUser: pulumi.String(cfg.bootstrapUser),
+			AdditionalRole: &components.ExecutorPolicyAdditionalRole{
+				S3Admin: true,
+			},
 		}, nil)
 		if err != nil {
 			return err

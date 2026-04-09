@@ -1,0 +1,4 @@
+encryptionsalt: v1:KX/j92b/5zA=:v1:HdHhwwvHc12RYSm0:LxzXakm1J8rOJ1TUNoIfsBZsnax/qQ==
+config:
+  aws:region: ap-southeast-1
+  aws:profile: pulumi-executor

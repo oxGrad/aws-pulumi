@@ -1,0 +1,87 @@
+parameters:
+  - name: stack
+    displayName: Pulumi Stack
+    type: string
+
+trigger: none
+
+variables:
+  PULUMI_HOME: $(Pipeline.Workspace)/.pulumi
+
+stages:
+  - stage: Preview
+    displayName: Pulumi Preview
+    jobs:
+      - job: PulumiPreview
+        displayName: Preview changes
+        pool:
+          vmImage: ubuntu-latest
+        container: $(PULUMI_IMAGE)
+        steps:
+          - checkout: self
+
+          - script: |
+              passphrase_var="PULUMI_CONFIG_PASSPHRASE_${{ parameters.stack }}"
+              export PULUMI_CONFIG_PASSPHRASE="${!passphrase_var}"
+              cd platform
+              if ! pulumi stack select "${{ parameters.stack }}" --non-interactive 2>/dev/null; then
+                echo "##[error]Stack '${{ parameters.stack }}' does not exist."
+                exit 1
+              fi
+            displayName: Validate stack exists
+            env:
+              AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
+              AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
+              AWS_REGION: $(AWS_REGION)
+              PULUMI_CONFIG_PASSPHRASE_dev: $(PULUMI_CONFIG_PASSPHRASE_dev)
+              PULUMI_CONFIG_PASSPHRASE_stag: $(PULUMI_CONFIG_PASSPHRASE_stag)
+              PULUMI_CONFIG_PASSPHRASE_prod: $(PULUMI_CONFIG_PASSPHRASE_prod)
+              PULUMI_CONFIG_PASSPHRASE_shared: $(PULUMI_CONFIG_PASSPHRASE_shared)
+
+          - script: |
+              # Resolve passphrase for the selected stack using indirect expansion
+              passphrase_var="PULUMI_CONFIG_PASSPHRASE_${{ parameters.stack }}"
+              export PULUMI_CONFIG_PASSPHRASE="${!passphrase_var}"
+              cd platform
+              pulumi preview --stack "${{ parameters.stack }}" --non-interactive
+            displayName: Pulumi Preview
+            env:
+              AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
+              AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
+              AWS_REGION: $(AWS_REGION)
+              PULUMI_CONFIG_PASSPHRASE_dev: $(PULUMI_CONFIG_PASSPHRASE_dev)
+              PULUMI_CONFIG_PASSPHRASE_stag: $(PULUMI_CONFIG_PASSPHRASE_stag)
+              PULUMI_CONFIG_PASSPHRASE_prod: $(PULUMI_CONFIG_PASSPHRASE_prod)
+              PULUMI_CONFIG_PASSPHRASE_shared: $(PULUMI_CONFIG_PASSPHRASE_shared)
+
+  - stage: Apply
+    displayName: Pulumi Apply
+    dependsOn: Preview
+    jobs:
+      - deployment: PulumiApply
+        displayName: Apply changes
+        pool:
+          vmImage: ubuntu-latest
+        container: $(PULUMI_IMAGE)
+        environment: pulumi-apply # TODO: Create environment in Azure DevOps
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+
+                - script: |
+                    # Resolve passphrase for the selected stack using indirect expansion
+                    passphrase_var="PULUMI_CONFIG_PASSPHRASE_${{ parameters.stack }}"
+                    export PULUMI_CONFIG_PASSPHRASE="${!passphrase_var}"
+                    cd platform
+                    pulumi up --stack "${{ parameters.stack }}" --yes --non-interactive
+                  displayName: Pulumi Up
+                  env:
+                    AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
+                    AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
+                    AWS_REGION: $(AWS_REGION)
+                    PULUMI_CONFIG_PASSPHRASE_dev: $(PULUMI_CONFIG_PASSPHRASE_dev)
+                    PULUMI_CONFIG_PASSPHRASE_stag: $(PULUMI_CONFIG_PASSPHRASE_stag)
+                    PULUMI_CONFIG_PASSPHRASE_prod: $(PULUMI_CONFIG_PASSPHRASE_prod)
+                    PULUMI_CONFIG_PASSPHRASE_shared: $(PULUMI_CONFIG_PASSPHRASE_shared)

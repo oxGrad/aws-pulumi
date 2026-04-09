@@ -34,7 +34,9 @@ stages:
               AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
               AWS_REGION: $(AWS_REGION)
               PULUMI_CONFIG_PASSPHRASE_dev: $(PULUMI_CONFIG_PASSPHRASE_dev)
+              PULUMI_CONFIG_PASSPHRASE_stag: $(PULUMI_CONFIG_PASSPHRASE_stag)
               PULUMI_CONFIG_PASSPHRASE_prod: $(PULUMI_CONFIG_PASSPHRASE_prod)
+              PULUMI_CONFIG_PASSPHRASE_shared: $(PULUMI_CONFIG_PASSPHRASE_shared)
 
           - script: |
               # Resolve passphrase for the selected stack using indirect expansion
@@ -48,7 +50,9 @@ stages:
               AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
               AWS_REGION: $(AWS_REGION)
               PULUMI_CONFIG_PASSPHRASE_dev: $(PULUMI_CONFIG_PASSPHRASE_dev)
+              PULUMI_CONFIG_PASSPHRASE_stag: $(PULUMI_CONFIG_PASSPHRASE_stag)
               PULUMI_CONFIG_PASSPHRASE_prod: $(PULUMI_CONFIG_PASSPHRASE_prod)
+              PULUMI_CONFIG_PASSPHRASE_shared: $(PULUMI_CONFIG_PASSPHRASE_shared)
 
   - stage: Apply
     displayName: Pulumi Apply
@@ -78,4 +82,6 @@ stages:
                     AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
                     AWS_REGION: $(AWS_REGION)
                     PULUMI_CONFIG_PASSPHRASE_dev: $(PULUMI_CONFIG_PASSPHRASE_dev)
+                    PULUMI_CONFIG_PASSPHRASE_stag: $(PULUMI_CONFIG_PASSPHRASE_stag)
                     PULUMI_CONFIG_PASSPHRASE_prod: $(PULUMI_CONFIG_PASSPHRASE_prod)
+                    PULUMI_CONFIG_PASSPHRASE_shared: $(PULUMI_CONFIG_PASSPHRASE_shared)

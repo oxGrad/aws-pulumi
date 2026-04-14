@@ -16,6 +16,7 @@ type CIUserArgs struct {
 	User            pulumi.StringInput // ciUser
 	ExecutorRoleARN pulumi.StringInput
 	BootstrapUser   pulumi.StringInput
+	BootstrapSource pulumi.StringInput
 }
 
 func NewCIUser(ctx *pulumi.Context, name string, args *CIUserArgs, opts ...pulumi.ResourceOption) (*CIUser, error) {
@@ -34,6 +35,7 @@ func NewCIUser(ctx *pulumi.Context, name string, args *CIUserArgs, opts ...pulum
 			"ManagedBy":   args.BootstrapUser,
 			"Team":        pulumi.String("SRE"),
 			"Purpose":     pulumi.String("CI/CD Pulumi state access"),
+			"Source":      args.BootstrapSource,
 		},
 	}, pulumi.Parent(self))
 	if err != nil {
@@ -62,9 +64,9 @@ func NewCIUser(ctx *pulumi.Context, name string, args *CIUserArgs, opts ...pulum
 		return string(jsonBytes), nil
 	}).(pulumi.StringOutput)
 
-	userPolicyName := fmt.Sprintf("%v-assume-role-policy", args.User)
+	userPolicyName := fmt.Sprintf("%v-assume-role-policy", name)
 	_, err = iam.NewUserPolicy(ctx, userPolicyName, &iam.UserPolicyArgs{
-		Name:   pulumi.String(userPolicyName),
+		Name:   pulumi.Sprintf("%v-assume-role-policy", args.User),
 		User:   args.User,
 		Policy: assumeRoleUserPolicyDoc,
 	}, pulumi.Parent(self))

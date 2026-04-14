@@ -13,11 +13,12 @@ type ExecutorPolicy struct {
 }
 
 type ExecutorPolicyArgs struct {
-	BucketARN      pulumi.StringInput
-	KmsARN         pulumi.StringInput
-	RoleName       pulumi.StringInput
-	BootstrapUser  pulumi.StringInput
-	AdditionalRole *ExecutorPolicyAdditionalRole
+	BucketARN       pulumi.StringInput
+	KmsARN          pulumi.StringInput
+	RoleName        pulumi.StringInput
+	BootstrapUser   pulumi.StringInput
+	BootstrapSource pulumi.StringInput
+	AdditionalRole  *ExecutorPolicyAdditionalRole
 }
 
 type ExecutorPolicyAdditionalRole struct {
@@ -67,6 +68,29 @@ func NewExecutorPolicy(ctx *pulumi.Context, name string, args *ExecutorPolicyArg
 					},
 					"Resource": kmsArn,
 				},
+				{
+					"Sid":    "IAMCIUserManagement",
+					"Effect": "Allow",
+					"Action": []string{
+						"iam:CreateUser",
+						"iam:DeleteUser",
+						"iam:GetUser",
+						"iam:TagUser",
+						"iam:UntagUser",
+						"iam:CreatePolicy",
+						"iam:DeletePolicy",
+						"iam:GetPolicy",
+						"iam:GetPolicyVersion",
+						"iam:ListPolicyVersions",
+						"iam:AttachUserPolicy",
+						"iam:DetachUserPolicy",
+						"iam:ListAttachedUserPolicies",
+						"iam:CreateAccessKey",
+						"iam:DeleteAccessKey",
+						"iam:ListAccessKeys",
+					},
+					"Resource": "*",
+				},
 			},
 		}
 		jsonBytes, err := json.Marshal(doc)
@@ -85,6 +109,7 @@ func NewExecutorPolicy(ctx *pulumi.Context, name string, args *ExecutorPolicyArg
 			"Name":      pulumi.String(executorPolicyName),
 			"ManagedBy": args.BootstrapUser,
 			"Team":      pulumi.String("SRE"),
+			"Source":    args.BootstrapSource,
 		},
 	}, pulumi.Parent(self))
 	if err != nil {

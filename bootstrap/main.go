@@ -7,6 +7,10 @@ import (
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
+const (
+	BOOTSTRAP_SOURCE = "gobc-pulumi/bootstrap"
+)
+
 func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
 		// Load stack configuration
@@ -19,8 +23,9 @@ func main() {
 		// 1. KMS Key for S3 bucket encryption
 		// -------------------------------------------------------
 		stateKey, err := components.NewKeyAndAlias(ctx, "pulumi-key", components.KeyAndAliasArgs{
-			KmsName:       pulumi.String(cfg.kmsName),
-			BootstrapUser: pulumi.String(cfg.bootstrapUser),
+			KmsName:         pulumi.String(cfg.kmsName),
+			BootstrapUser:   pulumi.String(cfg.bootstrapUser),
+			BootstrapSource: pulumi.String(BOOTSTRAP_SOURCE),
 		}, nil)
 		if err != nil {
 			return err
@@ -86,6 +91,7 @@ func main() {
 			User:            pulumi.String(cfg.ciUser),
 			ExecutorRoleARN: executerRole.ARN,
 			BootstrapUser:   pulumi.String(cfg.bootstrapUser),
+			BootstrapSource: pulumi.String(BOOTSTRAP_SOURCE),
 		}, nil)
 		if err != nil {
 			return err

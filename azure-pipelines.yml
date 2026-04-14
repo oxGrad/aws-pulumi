@@ -6,7 +6,9 @@ parameters:
 trigger: none
 
 variables:
-  PULUMI_HOME: $(Pipeline.Workspace)/.pulumi
+  - group: pulumi
+  - name: PULUMI_HOME
+    value: $(Pipeline.Workspace)/.pulumi
 
 stages:
   - stage: Preview

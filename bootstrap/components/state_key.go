@@ -17,8 +17,9 @@ type KeyAndAlias struct {
 }
 
 type KeyAndAliasArgs struct {
-	KmsName       pulumi.StringInput
-	BootstrapUser pulumi.StringInput
+	KmsName         pulumi.StringInput
+	BootstrapUser   pulumi.StringInput
+	BootstrapSource pulumi.StringInput
 }
 
 func NewKeyAndAlias(ctx *pulumi.Context, name string, args KeyAndAliasArgs, opts ...pulumi.ResourceOption) (*KeyAndAlias, error) {
@@ -37,6 +38,7 @@ func NewKeyAndAlias(ctx *pulumi.Context, name string, args KeyAndAliasArgs, opts
 			"Environment": pulumi.String(ctx.Stack()),
 			"ManagedBy":   args.BootstrapUser,
 			"Team":        pulumi.String("SRE"),
+			"Source":      args.BootstrapSource,
 		},
 	}, pulumi.Parent(self))
 	if err != nil {

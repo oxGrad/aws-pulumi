@@ -7,8 +7,11 @@ import (
 )
 
 type stackCfg struct {
-	identity    *aws.GetCallerIdentityResult
-	azureCIUser string
+	identity          *aws.GetCallerIdentityResult
+	azureCIUser       string
+	kmsARN            string
+	platformManagedBy string
+	platformSource    string
 }
 
 func loadConfig(ctx *pulumi.Context) (*stackCfg, error) {
@@ -16,6 +19,12 @@ func loadConfig(ctx *pulumi.Context) (*stackCfg, error) {
 		sCfg = &stackCfg{}
 		err  error
 	)
+
+	{
+		platformCfg := config.New(ctx, "platform")
+		sCfg.platformManagedBy = platformCfg.Get("managedby")
+		sCfg.platformSource = platformCfg.Get("source")
+	}
 
 	// Fetch account ID dynamically — no config needed
 	sCfg.identity, err = aws.GetCallerIdentity(ctx, nil, nil)
@@ -28,6 +37,7 @@ func loadConfig(ctx *pulumi.Context) (*stackCfg, error) {
 	case "shared":
 		ci := config.New(ctx, "ci")
 		sCfg.azureCIUser = ci.Get("azureUser")
+		sCfg.kmsARN = ci.Get("kmsARN") // NOTE: To push azure-ci user access_key_id and access_key_secret to secret manager.
 	}
 
 	return sCfg, nil

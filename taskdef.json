@@ -1,0 +1,60 @@
+{
+  "family": "gobc-sandbox",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::{{AWS_ACCOUNT_ID}}:role/gobc-sandbox-task-role",
+  "containerDefinitions": [
+    {
+      "name": "gobc-sandbox",
+      "image": "{{ECR_REPOSITORY_URL}}/gobc-sandbox:{{IMAGE_TAG}}",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        { "name": "PORT", "value": "8080" },
+        { "name": "OTEL_SERVICE_NAME", "value": "gobc-sandbox" },
+        { "name": "OTEL_EXPORTER_OTLP_ENDPOINT", "value": "localhost:4317" },
+        { "name": "ENV", "value": "production" },
+        { "name": "TZ", "value": "Asia/Jakarta" },
+        { "name": "LOG_LEVEL", "value": "info" },
+        { "name": "AWS_REGION", "value": "{{AWS_REGION}}" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/gobc-sandbox",
+          "awslogs-region": "{{AWS_REGION}}",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "dependsOn": [
+        {
+          "containerName": "otel-collector",
+          "condition": "START"
+        }
+      ]
+    },
+    {
+      "name": "otel-collector",
+      "image": "public.ecr.aws/aws-observability/aws-otel-collector:latest",
+      "essential": false,
+      "command": ["--config=ssm:///gobc-sandbox/otel-collector-config"],
+      "environment": [{ "name": "AWS_REGION", "value": "{{AWS_REGION}}" }],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/gobc-sandbox",
+          "awslogs-region": "{{AWS_REGION}}",
+          "awslogs-stream-prefix": "otel-collector"
+        }
+      }
+    }
+  ]
+}

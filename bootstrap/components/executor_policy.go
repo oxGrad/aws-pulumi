@@ -16,7 +16,6 @@ type ExecutorPolicyArgs struct {
 	BucketARN      pulumi.StringInput
 	KmsARN         pulumi.StringInput
 	RoleName       pulumi.StringInput
-	BootstrapUser  pulumi.StringInput
 	AdditionalRole *ExecutorPolicyAdditionalRole
 }
 
@@ -67,6 +66,29 @@ func NewExecutorPolicy(ctx *pulumi.Context, name string, args *ExecutorPolicyArg
 					},
 					"Resource": kmsArn,
 				},
+				{
+					"Sid":    "IAMCIUserManagement",
+					"Effect": "Allow",
+					"Action": []string{
+						"iam:CreateUser",
+						"iam:DeleteUser",
+						"iam:GetUser",
+						"iam:TagUser",
+						"iam:UntagUser",
+						"iam:CreatePolicy",
+						"iam:DeletePolicy",
+						"iam:GetPolicy",
+						"iam:GetPolicyVersion",
+						"iam:ListPolicyVersions",
+						"iam:AttachUserPolicy",
+						"iam:DetachUserPolicy",
+						"iam:ListAttachedUserPolicies",
+						"iam:CreateAccessKey",
+						"iam:DeleteAccessKey",
+						"iam:ListAccessKeys",
+					},
+					"Resource": "*",
+				},
 			},
 		}
 		jsonBytes, err := json.Marshal(doc)
@@ -82,9 +104,7 @@ func NewExecutorPolicy(ctx *pulumi.Context, name string, args *ExecutorPolicyArg
 		Description: pulumi.String("Grants access to Pulumi state S3 bucket and KMS key"),
 		Policy:      ExecutorPolicyDoc,
 		Tags: pulumi.StringMap{
-			"Name":      pulumi.String(executorPolicyName),
-			"ManagedBy": args.BootstrapUser,
-			"Team":      pulumi.String("SRE"),
+			"Name": pulumi.String(executorPolicyName),
 		},
 	}, pulumi.Parent(self))
 	if err != nil {

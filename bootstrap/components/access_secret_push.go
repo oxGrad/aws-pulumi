@@ -15,9 +15,8 @@ type PushAccessKeyToSecretManager struct {
 }
 
 type PushAccessKeyToSecretManagerArgs struct {
-	User          pulumi.StringInput
-	KmsARN        pulumi.StringInput
-	BootstrapUser pulumi.StringInput
+	User   pulumi.StringInput
+	KmsARN pulumi.StringInput
 }
 
 func NewPushAccessKeyToSecretManager(ctx *pulumi.Context, name string, args *PushAccessKeyToSecretManagerArgs, opts ...pulumi.ResourceOption) (*PushAccessKeyToSecretManager, error) {
@@ -61,11 +60,6 @@ func NewPushAccessKeyToSecretManager(ctx *pulumi.Context, name string, args *Pus
 		Name:        pulumi.String(fmt.Sprintf("%s/access-key", name)),
 		Description: pulumi.String(fmt.Sprintf("%s user access key credentials", name)),
 		KmsKeyId:    args.KmsARN,
-		Tags: pulumi.StringMap{
-			"Environment": pulumi.String(ctx.Stack()),
-			"ManagedBy":   args.BootstrapUser,
-			"Team":        pulumi.String("SRE"),
-		},
 	}, pulumi.Parent(self))
 	if err != nil {
 		return nil, fmt.Errorf("error creating secret: %w", err)
@@ -80,12 +74,6 @@ func NewPushAccessKeyToSecretManager(ctx *pulumi.Context, name string, args *Pus
 		return nil, fmt.Errorf("error creating secret version: %w", err)
 	}
 
-	// _, err = iam.GetAccessKey(ctx, accessKeyName, ciAccessKey.ID(), &iam.AccessKeyState{
-	// 	User: pulumi.String(name),
-	// }, pulumi.Parent(self))
-	// if err != nil {
-	// 	return nil, err
-	// }
 	_ = ctx.RegisterResourceOutputs(self, pulumi.Map{
 		"ARN": self.ARN,
 	})

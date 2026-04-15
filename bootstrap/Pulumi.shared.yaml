@@ -1,7 +1,8 @@
 config:
   aws:region: ap-southeast-1
   aws:profile: admin
-  bootstrap:user: gatra
+  bootstrap:managedby: gatra
+  bootstrap:source: gobc-pulumi/bootstrap
   bucket:name: bc-sre-pulumi-state
   ci:role: pulumi-executor
   ci:user: pulumi-ci

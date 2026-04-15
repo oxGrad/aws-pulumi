@@ -4,6 +4,7 @@ import (
 	"bootstrap/components"
 	"fmt"
 
+	"github.com/pulumi/pulumi-aws/sdk/v7/go/aws"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
@@ -16,12 +17,29 @@ func main() {
 		}
 
 		// -------------------------------------------------------
+		// 0. AWS Provider with Default Tags
+		// -------------------------------------------------------
+		provider, err := aws.NewProvider(ctx, "aws", &aws.ProviderArgs{
+			DefaultTags: &aws.ProviderDefaultTagsArgs{
+				Tags: pulumi.StringMap{
+					"Environment":     pulumi.String(ctx.Stack()),
+					"ManagedBy":       pulumi.String(cfg.bootstrapManagedBy),
+					"BootstrapSource": pulumi.String(cfg.bootstrapSource),
+				},
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("error creating aws provider: %w", err)
+		}
+
+		// -------------------------------------------------------
 		// 1. KMS Key for S3 bucket encryption
 		// -------------------------------------------------------
 		stateKey, err := components.NewKeyAndAlias(ctx, "pulumi-key", components.KeyAndAliasArgs{
-			KmsName:       pulumi.String(cfg.kmsName),
-			BootstrapUser: pulumi.String(cfg.bootstrapUser),
-		}, nil)
+			KmsName: pulumi.String(cfg.kmsName),
+		},
+			pulumi.Provider(provider),
+		)
 		if err != nil {
 			return err
 		}
@@ -30,9 +48,11 @@ func main() {
 		// 2. S3 Bucket: bc-pulumi-state
 		// -------------------------------------------------------
 		bucket, err := components.NewStateBucket(ctx, cfg.bucketName, &components.StateBucketArgs{
-			BucketName:    pulumi.String(cfg.bucketName),
-			BootstrapUser: pulumi.String(cfg.bootstrapUser),
-		}, nil)
+			BucketName: pulumi.String(cfg.bucketName),
+			KmsARN:     stateKey.KmsARN,
+		},
+			pulumi.Provider(provider),
+		)
 		if err != nil {
 			return err
 		}
@@ -41,10 +61,9 @@ func main() {
 		// 3. IAM Role: pulumi-executor
 		// -------------------------------------------------------
 		executerRole, err := components.NewExecutorRole(ctx, cfg.ciRole, &components.ExecutorRoleArgs{
-			AWSAccountID:  pulumi.String(cfg.identity.AccountId),
-			Role:          pulumi.String(cfg.ciRole),
-			BootstrapUser: pulumi.String(cfg.bootstrapUser),
-		}, nil)
+			AWSAccountID: pulumi.String(cfg.identity.AccountId),
+			Role:         pulumi.String(cfg.ciRole),
+		}, pulumi.Provider(provider))
 		if err != nil {
 			return err
 		}
@@ -53,14 +72,13 @@ func main() {
 		// 4. IAM Policy: access to S3 bucket and KMS key
 		// -------------------------------------------------------
 		_, err = components.NewExecutorPolicy(ctx, fmt.Sprintf("%s-policy", cfg.ciRole), &components.ExecutorPolicyArgs{
-			BucketARN:     bucket.ARN,
-			KmsARN:        stateKey.KmsARN,
-			RoleName:      pulumi.String(cfg.ciRole),
-			BootstrapUser: pulumi.String(cfg.bootstrapUser),
+			BucketARN: bucket.ARN,
+			KmsARN:    stateKey.KmsARN,
+			RoleName:  pulumi.String(cfg.ciRole),
 			AdditionalRole: &components.ExecutorPolicyAdditionalRole{
 				S3Admin: true,
 			},
-		}, nil)
+		}, pulumi.Provider(provider))
 		if err != nil {
 			return err
 		}
@@ -73,8 +91,7 @@ func main() {
 			ExecutorRoleARN: executerRole.ARN,
 			KmsName:         pulumi.String(cfg.kmsName),
 			KmsKeyID:        stateKey.KmsID,
-			BootstrapUser:   pulumi.String(cfg.bootstrapUser),
-		}, nil)
+		}, pulumi.Provider(provider))
 		if err != nil {
 			return err
 		}
@@ -85,8 +102,8 @@ func main() {
 		_, err = components.NewCIUser(ctx, cfg.ciUser, &components.CIUserArgs{
 			User:            pulumi.String(cfg.ciUser),
 			ExecutorRoleARN: executerRole.ARN,
-			BootstrapUser:   pulumi.String(cfg.bootstrapUser),
-		}, nil)
+			// BootstrapManagedBy: pulumi.String(cfg.bootstrapManagedBy),
+		}, pulumi.Provider(provider))
 		if err != nil {
 			return err
 		}
@@ -95,10 +112,10 @@ func main() {
 		// 7. Secret Manager: pulumi-ci
 		// -------------------------------------------------------
 		accessKey, err := components.NewPushAccessKeyToSecretManager(ctx, cfg.ciUser, &components.PushAccessKeyToSecretManagerArgs{
-			User:          pulumi.String(cfg.ciUser),
-			KmsARN:        stateKey.KmsARN,
-			BootstrapUser: pulumi.String(cfg.bootstrapUser),
-		}, nil)
+			User:   pulumi.String(cfg.ciUser),
+			KmsARN: stateKey.KmsARN,
+			// BootstrapManagedBy: pulumi.String(cfg.bootstrapManagedBy),
+		}, pulumi.Provider(provider))
 		if err != nil {
 			return err
 		}

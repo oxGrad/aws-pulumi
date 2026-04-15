@@ -1,6 +1,8 @@
 name: bootstrap
 description: Bootstrap pulumi state bucket
 runtime: go
+backend:
+  url: https://api.pulumi.com
 config:
   pulumi:tags:
     value:

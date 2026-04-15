@@ -14,9 +14,8 @@ type ExecutorRole struct {
 }
 
 type ExecutorRoleArgs struct {
-	AWSAccountID  pulumi.StringInput
-	Role          pulumi.StringInput
-	BootstrapUser pulumi.StringInput
+	AWSAccountID pulumi.StringInput
+	Role         pulumi.StringInput
 }
 
 func NewExecutorRole(ctx *pulumi.Context, name string, args *ExecutorRoleArgs, opts ...pulumi.ResourceOption) (*ExecutorRole, error) {
@@ -52,9 +51,7 @@ func NewExecutorRole(ctx *pulumi.Context, name string, args *ExecutorRoleArgs, o
 		Description:      pulumi.String("Role for Pulumi CI/CD executor with access to state bucket and KMS key"),
 		AssumeRolePolicy: assumeRolePolicyDoc,
 		Tags: pulumi.StringMap{
-			"Name":      pulumi.String("pulumi-executor"),
-			"ManagedBy": args.BootstrapUser,
-			"Team":      pulumi.String("SRE"),
+			"Name": pulumi.String("pulumi-executor"),
 		},
 	}, pulumi.Parent(self))
 	if err != nil {

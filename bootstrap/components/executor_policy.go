@@ -13,12 +13,10 @@ type ExecutorPolicy struct {
 }
 
 type ExecutorPolicyArgs struct {
-	BucketARN       pulumi.StringInput
-	KmsARN          pulumi.StringInput
-	RoleName        pulumi.StringInput
-	BootstrapUser   pulumi.StringInput
-	BootstrapSource pulumi.StringInput
-	AdditionalRole  *ExecutorPolicyAdditionalRole
+	BucketARN      pulumi.StringInput
+	KmsARN         pulumi.StringInput
+	RoleName       pulumi.StringInput
+	AdditionalRole *ExecutorPolicyAdditionalRole
 }
 
 type ExecutorPolicyAdditionalRole struct {
@@ -106,10 +104,7 @@ func NewExecutorPolicy(ctx *pulumi.Context, name string, args *ExecutorPolicyArg
 		Description: pulumi.String("Grants access to Pulumi state S3 bucket and KMS key"),
 		Policy:      ExecutorPolicyDoc,
 		Tags: pulumi.StringMap{
-			"Name":      pulumi.String(executorPolicyName),
-			"ManagedBy": args.BootstrapUser,
-			"Team":      pulumi.String("SRE"),
-			"Source":    args.BootstrapSource,
+			"Name": pulumi.String(executorPolicyName),
 		},
 	}, pulumi.Parent(self))
 	if err != nil {

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
-
 	"platform/components"
+
+	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
 // shared deploys environment-agnostic resources: IAM users, roles, etc.
@@ -13,8 +13,10 @@ func shared(ctx *pulumi.Context, cfg *stackCfg) error {
 	// IAM User: azure-ci
 	// -------------------------------------------------------
 	_, err := components.NewAzureCIUser(ctx, "azure-ci", &components.AzureCIUserArgs{
-		User:          pulumi.String(cfg.azureCIUser),
-		BootstrapUser: pulumi.String("platform"),
+		User:              pulumi.String(cfg.azureCIUser),
+		KmsARN:            pulumi.String(cfg.kmsARN),
+		PlatformManagedBy: pulumi.String(cfg.platformManagedBy),
+		PlatformSource:    pulumi.String(cfg.platformSource),
 	})
 	if err != nil {
 		return err

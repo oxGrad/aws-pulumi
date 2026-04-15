@@ -6,3 +6,6 @@ preview:
 
 up:
   pulumi up
+
+refresh:
+  pulumi refresh --stack shared

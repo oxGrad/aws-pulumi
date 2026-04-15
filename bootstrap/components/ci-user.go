@@ -13,10 +13,9 @@ type CIUser struct {
 }
 
 type CIUserArgs struct {
-	User            pulumi.StringInput // ciUser
-	ExecutorRoleARN pulumi.StringInput
-	BootstrapUser   pulumi.StringInput
-	BootstrapSource pulumi.StringInput
+	User               pulumi.StringInput // ciUser
+	ExecutorRoleARN    pulumi.StringInput
+	BootstrapManagedBy pulumi.StringInput
 }
 
 func NewCIUser(ctx *pulumi.Context, name string, args *CIUserArgs, opts ...pulumi.ResourceOption) (*CIUser, error) {
@@ -31,11 +30,7 @@ func NewCIUser(ctx *pulumi.Context, name string, args *CIUserArgs, opts ...pulum
 		Name: args.User,
 		Path: pulumi.String("/ci/"),
 		Tags: pulumi.StringMap{
-			"Environment": pulumi.String(ctx.Stack()),
-			"ManagedBy":   args.BootstrapUser,
-			"Team":        pulumi.String("SRE"),
-			"Purpose":     pulumi.String("CI/CD Pulumi state access"),
-			"Source":      args.BootstrapSource,
+			"Purpose": pulumi.String("CI/CD Pulumi state access"),
 		},
 	}, pulumi.Parent(self))
 	if err != nil {

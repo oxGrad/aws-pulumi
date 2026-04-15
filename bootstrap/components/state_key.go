@@ -17,9 +17,7 @@ type KeyAndAlias struct {
 }
 
 type KeyAndAliasArgs struct {
-	KmsName         pulumi.StringInput
-	BootstrapUser   pulumi.StringInput
-	BootstrapSource pulumi.StringInput
+	KmsName pulumi.StringInput
 }
 
 func NewKeyAndAlias(ctx *pulumi.Context, name string, args KeyAndAliasArgs, opts ...pulumi.ResourceOption) (*KeyAndAlias, error) {
@@ -33,13 +31,6 @@ func NewKeyAndAlias(ctx *pulumi.Context, name string, args KeyAndAliasArgs, opts
 		Description:          pulumi.String("Pulumi state S3 bucket encryption"),
 		EnableKeyRotation:    pulumi.Bool(true),
 		DeletionWindowInDays: pulumi.Int(30),
-		// Policy:            pulumi.String(),
-		Tags: pulumi.StringMap{
-			"Environment": pulumi.String(ctx.Stack()),
-			"ManagedBy":   args.BootstrapUser,
-			"Team":        pulumi.String("SRE"),
-			"Source":      args.BootstrapSource,
-		},
 	}, pulumi.Parent(self))
 	if err != nil {
 		return nil, fmt.Errorf("error creating KMS key: %w", err)

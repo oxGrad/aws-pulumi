@@ -20,7 +20,6 @@ type KeyPolicyArgs struct {
 	ExecutorRoleARN pulumi.StringInput
 	KmsName         pulumi.StringInput
 	KmsKeyID        pulumi.StringInput
-	BootstrapUser   pulumi.StringInput
 }
 
 func NewKeyPolicy(ctx *pulumi.Context, name string, args *KeyPolicyArgs, opts ...pulumi.ResourceOption) (*KeyPolicy, error) {

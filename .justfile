@@ -1,4 +1,5 @@
 mod scripts
+mod bootstrap
 mod platform
 
 _default:

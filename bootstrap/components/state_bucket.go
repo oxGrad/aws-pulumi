@@ -14,9 +14,8 @@ type StateBucket struct {
 }
 
 type StateBucketArgs struct {
-	BucketName    pulumi.StringInput
-	KmsArn        pulumi.StringInput
-	BootstrapUser pulumi.StringInput
+	BucketName pulumi.StringInput
+	KmsARN     pulumi.StringInput
 }
 
 func NewStateBucket(ctx *pulumi.Context, name string, args *StateBucketArgs, opts ...pulumi.ResourceOption) (*StateBucket, error) {
@@ -31,9 +30,7 @@ func NewStateBucket(ctx *pulumi.Context, name string, args *StateBucketArgs, opt
 		Bucket:       args.BucketName,
 		ForceDestroy: pulumi.Bool(false),
 		Tags: pulumi.StringMap{
-			"Environment": pulumi.String(ctx.Stack()),
-			"ManagedBy":   args.BootstrapUser,
-			"Team":        pulumi.String("SRE"),
+			"Purpose": pulumi.String("Manage AWS infrastructure state via Pulumi"),
 		},
 	}, pulumi.Parent(self))
 	if err != nil {
@@ -71,7 +68,7 @@ func NewStateBucket(ctx *pulumi.Context, name string, args *StateBucketArgs, opt
 			s3.BucketServerSideEncryptionConfigurationV2RuleArgs{
 				ApplyServerSideEncryptionByDefault: &s3.BucketServerSideEncryptionConfigurationV2RuleApplyServerSideEncryptionByDefaultArgs{
 					SseAlgorithm:   pulumi.String("aws:kms"),
-					KmsMasterKeyId: args.KmsArn,
+					KmsMasterKeyId: args.KmsARN,
 				},
 				BucketKeyEnabled: pulumi.Bool(true),
 			},

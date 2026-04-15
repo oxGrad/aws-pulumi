@@ -7,12 +7,13 @@ import (
 )
 
 type stackCfg struct {
-	identity      *aws.GetCallerIdentityResult
-	bootstrapUser string
-	bucketName    string
-	ciUser        string
-	ciRole        string
-	kmsName       string
+	identity           *aws.GetCallerIdentityResult
+	bootstrapManagedBy string
+	bootstrapSource    string
+	bucketName         string
+	ciUser             string
+	ciRole             string
+	kmsName            string
 }
 
 func loadConfig(ctx *pulumi.Context) (*stackCfg, error) {
@@ -21,6 +22,12 @@ func loadConfig(ctx *pulumi.Context) (*stackCfg, error) {
 		err  error
 	)
 
+	{
+		bootstrapCfg := config.New(ctx, "bootstrap")
+		sCfg.bootstrapManagedBy = bootstrapCfg.Get("managedby")
+		sCfg.bootstrapSource = bootstrapCfg.Get("source")
+	}
+
 	// Fetch account ID dynamically — no config needed
 	sCfg.identity, err = aws.GetCallerIdentity(ctx, nil, nil)
 	if err != nil {
@@ -28,18 +35,21 @@ func loadConfig(ctx *pulumi.Context) (*stackCfg, error) {
 		return nil, err
 	}
 
-	bootstrapCfg := config.New(ctx, "bootstrap")
-	sCfg.bootstrapUser = bootstrapCfg.Get("user")
+	{
+		bucketCfg := config.New(ctx, "bucket")
+		sCfg.bucketName = bucketCfg.Get("name")
+	}
 
-	bucketCfg := config.New(ctx, "bucket")
-	sCfg.bucketName = bucketCfg.Get("name")
+	{
+		ciCfg := config.New(ctx, "ci")
+		sCfg.ciUser = ciCfg.Get("user")
+		sCfg.ciRole = ciCfg.Get("role")
+	}
 
-	ciCfg := config.New(ctx, "ci")
-	sCfg.ciUser = ciCfg.Get("user")
-	sCfg.ciRole = ciCfg.Get("role")
-
-	kmsCfg := config.New(ctx, "kms")
-	sCfg.kmsName = kmsCfg.Get("name")
+	{
+		kmsCfg := config.New(ctx, "kms")
+		sCfg.kmsName = kmsCfg.Get("name")
+	}
 
 	return sCfg, nil
 }

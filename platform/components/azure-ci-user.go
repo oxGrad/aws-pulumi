@@ -11,11 +11,14 @@ import (
 
 type AzureCIUser struct {
 	pulumi.ResourceState
+	SecretARN pulumi.StringOutput
 }
 
 type AzureCIUserArgs struct {
-	User          pulumi.StringInput
-	BootstrapUser pulumi.StringInput
+	User              pulumi.StringInput
+	KmsARN            pulumi.StringInput
+	PlatformManagedBy pulumi.StringInput
+	PlatformSource    pulumi.StringInput
 }
 
 func NewAzureCIUser(ctx *pulumi.Context, name string, args *AzureCIUserArgs, opts ...pulumi.ResourceOption) (*AzureCIUser, error) {
@@ -29,10 +32,11 @@ func NewAzureCIUser(ctx *pulumi.Context, name string, args *AzureCIUserArgs, opt
 		Name: args.User,
 		Path: pulumi.String("/ci/"),
 		Tags: pulumi.StringMap{
-			"Environment": pulumi.String(ctx.Stack()),
-			"ManagedBy":   args.BootstrapUser,
-			"Team":        pulumi.String("SRE"),
-			"Purpose":     pulumi.String("Azure Pipelines CI/CD deployments"),
+			"Environment":    pulumi.String(ctx.Stack()),
+			"ManagedBy":      args.PlatformManagedBy,
+			"PlatformSource": args.PlatformSource,
+			"Team":           pulumi.String("SRE"),
+			"Purpose":        pulumi.String("Azure Pipelines CI/CD deployments"),
 		},
 	}, pulumi.Parent(self))
 	if err != nil {
@@ -95,9 +99,9 @@ func NewAzureCIUser(ctx *pulumi.Context, name string, args *AzureCIUserArgs, opt
 				"Resource": "*",
 			},
 			{
-				"Sid":    "PassRoleToECS",
-				"Effect": "Allow",
-				"Action": "iam:PassRole",
+				"Sid":      "PassRoleToECS",
+				"Effect":   "Allow",
+				"Action":   "iam:PassRole",
 				"Resource": "*",
 				"Condition": map[string]any{
 					"StringEquals": map[string]string{
@@ -117,9 +121,10 @@ func NewAzureCIUser(ctx *pulumi.Context, name string, args *AzureCIUserArgs, opt
 		Description: pulumi.String("ECR, ECS, and PassRole permissions for Azure Pipelines CI/CD deployments"),
 		Policy:      pulumi.String(string(deploymentPolicyDoc)),
 		Tags: pulumi.StringMap{
-			"ManagedBy": args.BootstrapUser,
-			"Team":      pulumi.String("SRE"),
-			"Purpose":   pulumi.String("CI/CD deployment"),
+			"ManagedBy":      args.PlatformManagedBy,
+			"PlatformSource": args.PlatformSource,
+			"Team":           pulumi.String("SRE"),
+			"Purpose":        pulumi.String("CI/CD deployment"),
 		},
 	}, pulumi.Parent(self))
 	if err != nil {
@@ -134,7 +139,54 @@ func NewAzureCIUser(ctx *pulumi.Context, name string, args *AzureCIUserArgs, opt
 		return nil, fmt.Errorf("error attaching deployment policy to user: %w", err)
 	}
 
-	_ = ctx.RegisterResourceOutputs(self, pulumi.Map{})
+	accessKey, err := iam.NewAccessKey(ctx, fmt.Sprintf("%s-access-key", name), &iam.AccessKeyArgs{
+		User:   args.User,
+		Status: pulumi.String("Active"),
+	}, pulumi.Parent(self), pulumi.AdditionalSecretOutputs([]string{"secret"}))
+	if err != nil {
+		return nil, fmt.Errorf("error creating access key: %w", err)
+	}
+
+	credentialsJSON := pulumi.All(accessKey.ID().ToStringOutput(), accessKey.Secret).ApplyT(func(vals []interface{}) (string, error) {
+		creds := map[string]string{
+			"access_key_id":     vals[0].(string),
+			"access_key_secret": vals[1].(string),
+		}
+		b, err := json.Marshal(creds)
+		if err != nil {
+			return "", fmt.Errorf("error marshaling credentials: %w", err)
+		}
+		return string(b), nil
+	}).(pulumi.StringOutput)
+
+	secret, err := secretsmanager.NewSecret(ctx, fmt.Sprintf("%s-credentials", name), &secretsmanager.SecretArgs{
+		Name:        pulumi.Sprintf("%s/access-key", args.User),
+		Description: pulumi.Sprintf("%s user access key credentials", args.User),
+		KmsKeyId:    args.KmsARN,
+		Tags: pulumi.StringMap{
+			"Environment":    pulumi.String(ctx.Stack()),
+			"ManagedBy":      args.PlatformManagedBy,
+			"PlatformSource": args.PlatformSource,
+			"Team":           pulumi.String("SRE"),
+			"Purpose":        pulumi.String("CI/CD deployment"),
+		},
+	}, pulumi.Parent(self))
+	if err != nil {
+		return nil, fmt.Errorf("error creating secret: %w", err)
+	}
+	self.SecretARN = secret.Arn
+
+	_, err = secretsmanager.NewSecretVersion(ctx, fmt.Sprintf("%s-credentials-version", name), &secretsmanager.SecretVersionArgs{
+		SecretId:     secret.ID(),
+		SecretString: credentialsJSON,
+	}, pulumi.Parent(self))
+	if err != nil {
+		return nil, fmt.Errorf("error creating secret version: %w", err)
+	}
+
+	_ = ctx.RegisterResourceOutputs(self, pulumi.Map{
+		"SecretARN": self.SecretARN,
+	})
 
 	return self, nil
 }

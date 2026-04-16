@@ -1,0 +1,5 @@
+encryptionsalt: v1:pfdw6akZbI4=:v1:fLtAQ2pCqxvGLgv5:QVflYzUhEI8kuFuJi2rMaMw1CrhLJA==
+config:
+  aws:region: ap-southeast-1
+  ci:azureUser: azure-ci
+  ci:kmsARN: arn:aws:kms:ap-southeast-1:626883896657:key/7669a297-fee8-4ce1-978e-b72b091368cf

@@ -20,9 +20,9 @@ func main() {
 		provider, err := aws.NewProvider(ctx, "aws", &aws.ProviderArgs{
 			DefaultTags: &aws.ProviderDefaultTagsArgs{
 				Tags: pulumi.StringMap{
-					"Environment":     pulumi.String(ctx.Stack()),
-					"ManagedBy":       pulumi.String(cfg.bootstrapManagedBy),
-					"BootstrapSource": pulumi.String(cfg.bootstrapSource),
+					"Environment":    pulumi.String(ctx.Stack()),
+					"ManagedBy":      pulumi.String(cfg.platformManagedBy),
+					"PlatformSource": pulumi.String(cfg.platformSource),
 				},
 			},
 		})
@@ -32,9 +32,9 @@ func main() {
 
 		switch ctx.Stack() {
 		case "shared":
-			return shared(ctx, cfg)
+			return shared(ctx, cfg, provider)
 		default:
-			return env(ctx, cfg)
+			return env(ctx, cfg, provider)
 		}
 	})
 }

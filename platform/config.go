@@ -20,17 +20,17 @@ func loadConfig(ctx *pulumi.Context) (*stackCfg, error) {
 		err  error
 	)
 
-	{
-		platformCfg := config.New(ctx, "platform")
-		sCfg.platformManagedBy = platformCfg.Get("managedby")
-		sCfg.platformSource = platformCfg.Get("source")
-	}
-
 	// Fetch account ID dynamically — no config needed
 	sCfg.identity, err = aws.GetCallerIdentity(ctx, nil, nil)
 	if err != nil {
 		_ = ctx.Log.Error("error getting caller identity: %w", nil)
 		return nil, err
+	}
+
+	{
+		platformCfg := config.New(ctx, "platform")
+		sCfg.platformManagedBy = platformCfg.Get("managedby")
+		sCfg.platformSource = platformCfg.Get("source")
 	}
 
 	switch ctx.Stack() {

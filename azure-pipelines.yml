@@ -2,11 +2,23 @@ parameters:
   - name: stack
     displayName: Pulumi Stack
     type: string
+    values:
+      - shared
+      - dev
+      - stag
+      - prod
 
 trigger: none
 
+pr:
+  branches:
+    include:
+      - master
+
 variables:
-  PULUMI_HOME: $(Pipeline.Workspace)/.pulumi
+  - group: pulumi
+  - name: PULUMI_HOME
+    value: $(Pipeline.Workspace)/.pulumi
 
 stages:
   - stage: Preview
@@ -57,6 +69,7 @@ stages:
   - stage: Apply
     displayName: Pulumi Apply
     dependsOn: Preview
+    condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
     jobs:
       - deployment: PulumiApply
         displayName: Apply changes

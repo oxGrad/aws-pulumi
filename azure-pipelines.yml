@@ -19,6 +19,10 @@ variables:
   - group: pulumi
   - name: PULUMI_HOME
     value: $(Pipeline.Workspace)/.pulumi
+  - name: PULUMI_EXECUTOR_ROLE
+    value: pulumi-executor
+  - name: SESSION_TOKEN_LIFETIME
+    value: "900"
 
 stages:
   - stage: Preview
@@ -33,10 +37,27 @@ stages:
           - checkout: self
 
           - script: |
+              CREDS=$(aws sts assume-role \
+                --role-arn "arn:aws:iam::$(AWS_ACCOUNT_ID):role/$(PULUMI_EXECUTOR_ROLE)" \
+                --role-session-name "pulumi-pipeline-$(Build.BuildId)" \
+                --duration-seconds $(SESSION_TOKEN_LIFETIME) \ # set token lifetime to 15min
+                --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
+                --output text)
+
+              echo "##vso[task.setvariable variable=AWS_ACCESS_KEY_ID;issecret=true]$(echo $CREDS | awk '{print $1}')"
+              echo "##vso[task.setvariable variable=AWS_SECRET_ACCESS_KEY;issecret=true]$(echo $CREDS | awk '{print $2}')"
+              echo "##vso[task.setvariable variable=AWS_SESSION_TOKEN;issecret=true]$(echo $CREDS | awk '{print $3}')"
+            displayName: Assume pulumi-executor role
+            env:
+              AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
+              AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
+              AWS_REGION: $(AWS_REGION)
+
+          - script: |
               passphrase_var="PULUMI_CONFIG_PASSPHRASE_${{ parameters.stack }}"
               export PULUMI_CONFIG_PASSPHRASE="${!passphrase_var}"
               cd platform
-              if ! pulumi stack select "${{ parameters.stack }}" --non-interactive 2>/dev/null; then
+              if ! pulumi stack select "${{ parameters.stack }}" --non-interactive; then
                 echo "##[error]Stack '${{ parameters.stack }}' does not exist."
                 exit 1
               fi
@@ -44,6 +65,7 @@ stages:
             env:
               AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
               AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
+              AWS_SESSION_TOKEN: $(AWS_SESSION_TOKEN)
               AWS_REGION: $(AWS_REGION)
               PULUMI_CONFIG_PASSPHRASE_dev: $(PULUMI_CONFIG_PASSPHRASE_dev)
               PULUMI_CONFIG_PASSPHRASE_stag: $(PULUMI_CONFIG_PASSPHRASE_stag)
@@ -51,7 +73,6 @@ stages:
               PULUMI_CONFIG_PASSPHRASE_shared: $(PULUMI_CONFIG_PASSPHRASE_shared)
 
           - script: |
-              # Resolve passphrase for the selected stack using indirect expansion
               passphrase_var="PULUMI_CONFIG_PASSPHRASE_${{ parameters.stack }}"
               export PULUMI_CONFIG_PASSPHRASE="${!passphrase_var}"
               cd platform
@@ -60,6 +81,7 @@ stages:
             env:
               AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
               AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
+              AWS_SESSION_TOKEN: $(AWS_SESSION_TOKEN)
               AWS_REGION: $(AWS_REGION)
               PULUMI_CONFIG_PASSPHRASE_dev: $(PULUMI_CONFIG_PASSPHRASE_dev)
               PULUMI_CONFIG_PASSPHRASE_stag: $(PULUMI_CONFIG_PASSPHRASE_stag)
@@ -84,7 +106,23 @@ stages:
                 - checkout: self
 
                 - script: |
-                    # Resolve passphrase for the selected stack using indirect expansion
+                    CREDS=$(aws sts assume-role \
+                      --role-arn "arn:aws:iam::$(AWS_ACCOUNT_ID):role/$(PULUMI_EXECUTOR_ROLE)" \
+                      --role-session-name "pulumi-pipeline-$(Build.BuildId)" \
+                      --duration-seconds $(SESSION_TOKEN_LIFETIME) \ # set token lifetime to 15min
+                      --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
+                      --output text)
+
+                    echo "##vso[task.setvariable variable=AWS_ACCESS_KEY_ID;issecret=true]$(echo $CREDS | awk '{print $1}')"
+                    echo "##vso[task.setvariable variable=AWS_SECRET_ACCESS_KEY;issecret=true]$(echo $CREDS | awk '{print $2}')"
+                    echo "##vso[task.setvariable variable=AWS_SESSION_TOKEN;issecret=true]$(echo $CREDS | awk '{print $3}')"
+                  displayName: Assume pulumi-executor role
+                  env:
+                    AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
+                    AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
+                    AWS_REGION: $(AWS_REGION)
+
+                - script: |
                     passphrase_var="PULUMI_CONFIG_PASSPHRASE_${{ parameters.stack }}"
                     export PULUMI_CONFIG_PASSPHRASE="${!passphrase_var}"
                     cd platform
@@ -93,6 +131,7 @@ stages:
                   env:
                     AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
                     AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
+                    AWS_SESSION_TOKEN: $(AWS_SESSION_TOKEN)
                     AWS_REGION: $(AWS_REGION)
                     PULUMI_CONFIG_PASSPHRASE_dev: $(PULUMI_CONFIG_PASSPHRASE_dev)
                     PULUMI_CONFIG_PASSPHRASE_stag: $(PULUMI_CONFIG_PASSPHRASE_stag)

@@ -8,4 +8,4 @@ config:
   platform:managedby: pulumi-ci
   platform:source: gobc-pulumi/platform
 backend:
-  url: s3://bc-sre-pulumi-state?region=ap-southeast-1&awssdk=v2&profile=pulumi-executor
+  url: s3://bc-sre-pulumi-state?region=ap-southeast-1&awssdk=v2

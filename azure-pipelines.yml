@@ -19,8 +19,6 @@ variables:
   - group: pulumi
   - name: PULUMI_HOME
     value: $(Pipeline.Workspace)/.pulumi
-  - name: PULUMI_IMAGE
-    value: pulumi/pulumi-go:3.230.0
 
 stages:
   - stage: Preview
@@ -30,7 +28,7 @@ stages:
         displayName: Preview changes
         pool:
           vmImage: ubuntu-latest
-        container: $(PULUMI_IMAGE)
+        container: pulumi/pulumi-go:3.230.0
         steps:
           - checkout: self
 
@@ -77,7 +75,7 @@ stages:
         displayName: Apply changes
         pool:
           vmImage: ubuntu-latest
-        container: $(PULUMI_IMAGE)
+        container: pulumi/pulumi-go:3.230.0
         environment: pulumi-apply # TODO: Create environment in Azure DevOps
         strategy:
           runOnce:

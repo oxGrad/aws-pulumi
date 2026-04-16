@@ -2,6 +2,11 @@ parameters:
   - name: stack
     displayName: Pulumi Stack
     type: string
+    values:
+      - shared
+      - dev
+      - stag
+      - prod
 
 trigger: none
 

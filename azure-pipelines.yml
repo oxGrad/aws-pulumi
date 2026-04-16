@@ -22,6 +22,7 @@ variables:
   - name: PULUMI_EXECUTOR_ROLE
     value: pulumi-executor
   - name: SESSION_TOKEN_LIFETIME
+    value: "900"
 
 stages:
   - stage: Preview

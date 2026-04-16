@@ -21,7 +21,7 @@ preview-ci stack="shared":
   CREDS=$(aws sts assume-role \
     --role-arn "arn:aws:iam::${AWS_ACCOUNT_ID}:role/pulumi-executor" \
     --role-session-name "pulumi-local-preview" \
-    --duration-seconds 900 \
+    --duration-seconds "900" \
     --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
     --output text)
   export AWS_ACCESS_KEY_ID=$(echo $CREDS | awk '{print $1}')

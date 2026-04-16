@@ -5,6 +5,11 @@ parameters:
 
 trigger: none
 
+pr:
+  branches:
+    include:
+      - master
+
 variables:
   - group: pulumi
   - name: PULUMI_HOME
@@ -59,6 +64,7 @@ stages:
   - stage: Apply
     displayName: Pulumi Apply
     dependsOn: Preview
+    condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
     jobs:
       - deployment: PulumiApply
         displayName: Apply changes

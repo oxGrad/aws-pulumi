@@ -10,4 +10,5 @@ new-stack-prod:
 new-stack env:
   pulumi stack init organization/{{ env }}
 
-
+lint:
+  golangci-lint run

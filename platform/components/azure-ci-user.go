@@ -15,11 +15,13 @@ type AzureCIUser struct {
 }
 
 type AzureCIUserArgs struct {
-	User              pulumi.StringInput
-	KmsARN            pulumi.StringInput
-	PlatformManagedBy pulumi.StringInput
-	PlatformSource    pulumi.StringInput
+	User   pulumi.StringInput
+	KmsARN pulumi.StringInput
 }
+
+const (
+	PURPOSE pulumi.String = "Azure Pipelines CI/CD deployments"
+)
 
 func NewAzureCIUser(ctx *pulumi.Context, name string, args *AzureCIUserArgs, opts ...pulumi.ResourceOption) (*AzureCIUser, error) {
 	self := &AzureCIUser{}
@@ -32,11 +34,7 @@ func NewAzureCIUser(ctx *pulumi.Context, name string, args *AzureCIUserArgs, opt
 		Name: args.User,
 		Path: pulumi.String("/ci/"),
 		Tags: pulumi.StringMap{
-			"Environment":    pulumi.String(ctx.Stack()),
-			"ManagedBy":      args.PlatformManagedBy,
-			"PlatformSource": args.PlatformSource,
-			"Team":           pulumi.String("SRE"),
-			"Purpose":        pulumi.String("Azure Pipelines CI/CD deployments"),
+			"Purpose": PURPOSE,
 		},
 	}, pulumi.Parent(self))
 	if err != nil {
@@ -109,6 +107,15 @@ func NewAzureCIUser(ctx *pulumi.Context, name string, args *AzureCIUserArgs, opt
 					},
 				},
 			},
+			{
+				"Sid":    "ECSTaskStatus",
+				"Effect": "Allow",
+				"Action": []string{
+					"ecs:DescribeTasks",
+					"ecs:ListTasks",
+				},
+				"Resource": "*",
+			},
 		},
 	})
 	if err != nil {
@@ -121,10 +128,7 @@ func NewAzureCIUser(ctx *pulumi.Context, name string, args *AzureCIUserArgs, opt
 		Description: pulumi.String("ECR, ECS, and PassRole permissions for Azure Pipelines CI/CD deployments"),
 		Policy:      pulumi.String(string(deploymentPolicyDoc)),
 		Tags: pulumi.StringMap{
-			"ManagedBy":      args.PlatformManagedBy,
-			"PlatformSource": args.PlatformSource,
-			"Team":           pulumi.String("SRE"),
-			"Purpose":        pulumi.String("CI/CD deployment"),
+			"Purpose": PURPOSE,
 		},
 	}, pulumi.Parent(self))
 	if err != nil {
@@ -164,11 +168,7 @@ func NewAzureCIUser(ctx *pulumi.Context, name string, args *AzureCIUserArgs, opt
 		Description: pulumi.Sprintf("%s user access key credentials", args.User),
 		KmsKeyId:    args.KmsARN,
 		Tags: pulumi.StringMap{
-			"Environment":    pulumi.String(ctx.Stack()),
-			"ManagedBy":      args.PlatformManagedBy,
-			"PlatformSource": args.PlatformSource,
-			"Team":           pulumi.String("SRE"),
-			"Purpose":        pulumi.String("CI/CD deployment"),
+			"Purpose": PURPOSE,
 		},
 	}, pulumi.Parent(self))
 	if err != nil {

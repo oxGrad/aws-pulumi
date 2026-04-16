@@ -19,6 +19,8 @@ variables:
   - group: pulumi
   - name: PULUMI_HOME
     value: $(Pipeline.Workspace)/.pulumi
+  - name: PULUMI_IMAGE
+    value: pulumi/pulumi-go:3.230.0
 
 stages:
   - stage: Preview

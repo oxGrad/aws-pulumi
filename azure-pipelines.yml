@@ -19,6 +19,8 @@ variables:
   - group: pulumi
   - name: PULUMI_HOME
     value: $(Pipeline.Workspace)/.pulumi
+  - name: GOPATH
+    value: $(Pipeline.Workspace)/go
   - name: PULUMI_EXECUTOR_ROLE
     value: pulumi-executor
   - name: SESSION_TOKEN_LIFETIME
@@ -32,15 +34,19 @@ stages:
         displayName: Preview changes
         pool:
           vmImage: ubuntu-latest
-        container: pulumi/pulumi-go:3.230.0
+        container: pulumi/pulumi-go:3.231.0
         steps:
           - checkout: self
+
+          - script: aws --version
+            displayName: "Check AWS CLI Version"
+            target: host
 
           - script: |
               CREDS=$(aws sts assume-role \
                 --role-arn "arn:aws:iam::$(AWS_ACCOUNT_ID):role/$(PULUMI_EXECUTOR_ROLE)" \
                 --role-session-name "pulumi-pipeline-$(Build.BuildId)" \
-                --duration-seconds $(SESSION_TOKEN_LIFETIME) \ # set token lifetime to 15min
+                --duration-seconds $(SESSION_TOKEN_LIFETIME) \
                 --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
                 --output text)
 
@@ -48,6 +54,7 @@ stages:
               echo "##vso[task.setvariable variable=AWS_SECRET_ACCESS_KEY;issecret=true]$(echo $CREDS | awk '{print $2}')"
               echo "##vso[task.setvariable variable=AWS_SESSION_TOKEN;issecret=true]$(echo $CREDS | awk '{print $3}')"
             displayName: Assume pulumi-executor role
+            target: host
             env:
               AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
               AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)
@@ -76,7 +83,7 @@ stages:
               passphrase_var="PULUMI_CONFIG_PASSPHRASE_${{ parameters.stack }}"
               export PULUMI_CONFIG_PASSPHRASE="${!passphrase_var}"
               cd platform
-              pulumi preview --stack "${{ parameters.stack }}" --non-interactive
+              pulumi preview --stack "${{ parameters.stack }}" --non-interactive --diff
             displayName: Pulumi Preview
             env:
               AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
@@ -97,7 +104,7 @@ stages:
         displayName: Apply changes
         pool:
           vmImage: ubuntu-latest
-        container: pulumi/pulumi-go:3.230.0
+        container: pulumi/pulumi-go:3.231.0
         environment: pulumi-apply # TODO: Create environment in Azure DevOps
         strategy:
           runOnce:
@@ -105,11 +112,15 @@ stages:
               steps:
                 - checkout: self
 
+                - script: aws --version
+                  displayName: "Check AWS CLI Version"
+                  target: host
+
                 - script: |
                     CREDS=$(aws sts assume-role \
                       --role-arn "arn:aws:iam::$(AWS_ACCOUNT_ID):role/$(PULUMI_EXECUTOR_ROLE)" \
                       --role-session-name "pulumi-pipeline-$(Build.BuildId)" \
-                      --duration-seconds $(SESSION_TOKEN_LIFETIME) \ # set token lifetime to 15min
+                      --duration-seconds $(SESSION_TOKEN_LIFETIME) \
                       --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
                       --output text)
 
@@ -117,6 +128,7 @@ stages:
                     echo "##vso[task.setvariable variable=AWS_SECRET_ACCESS_KEY;issecret=true]$(echo $CREDS | awk '{print $2}')"
                     echo "##vso[task.setvariable variable=AWS_SESSION_TOKEN;issecret=true]$(echo $CREDS | awk '{print $3}')"
                   displayName: Assume pulumi-executor role
+                  target: host
                   env:
                     AWS_ACCESS_KEY_ID: $(AWS_ACCESS_KEY_ID)
                     AWS_SECRET_ACCESS_KEY: $(AWS_SECRET_ACCESS_KEY)

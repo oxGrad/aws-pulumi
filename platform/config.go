@@ -7,11 +7,12 @@ import (
 )
 
 type stackCfg struct {
-	identity          *aws.GetCallerIdentityResult
-	azureCIUser       string
-	kmsARN            string
-	platformManagedBy string
-	platformSource    string
+	identity                 *aws.GetCallerIdentityResult
+	azureCIUser              string
+	createAzureUserAccessKey bool
+	kmsARN                   string
+	platformManagedBy        string
+	platformSource           string
 }
 
 func loadConfig(ctx *pulumi.Context) (*stackCfg, error) {
@@ -37,6 +38,7 @@ func loadConfig(ctx *pulumi.Context) (*stackCfg, error) {
 	case "shared":
 		ci := config.New(ctx, "ci")
 		sCfg.azureCIUser = ci.Get("azureUser")
+		sCfg.createAzureUserAccessKey = ci.GetBool("createAzureUserAccessKey")
 		sCfg.kmsARN = ci.Get("kmsARN") // NOTE: To push azure-ci user access_key_id and access_key_secret to secret manager.
 	}
 

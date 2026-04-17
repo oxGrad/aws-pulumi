@@ -5,13 +5,12 @@ import (
 	"fmt"
 
 	"github.com/pulumi/pulumi-aws/sdk/v7/go/aws/iam"
-	"github.com/pulumi/pulumi-aws/sdk/v7/go/aws/secretsmanager"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
 type AzureCIUser struct {
 	pulumi.ResourceState
-	SecretARN pulumi.StringOutput
+	Username pulumi.StringOutput
 }
 
 type AzureCIUserArgs struct {
@@ -30,7 +29,7 @@ func NewAzureCIUser(ctx *pulumi.Context, name string, args *AzureCIUserArgs, opt
 		return nil, err
 	}
 
-	_, err = iam.NewUser(ctx, name, &iam.UserArgs{
+	user, err := iam.NewUser(ctx, name, &iam.UserArgs{
 		Name: args.User,
 		Path: pulumi.String("/ci/"),
 		Tags: pulumi.StringMap{
@@ -40,6 +39,7 @@ func NewAzureCIUser(ctx *pulumi.Context, name string, args *AzureCIUserArgs, opt
 	if err != nil {
 		return nil, fmt.Errorf("error creating IAM user: %w", err)
 	}
+	self.Username = user.Name
 
 	deploymentPolicyDoc, err := json.Marshal(map[string]any{
 		"Version": "2012-10-17",
@@ -136,56 +136,15 @@ func NewAzureCIUser(ctx *pulumi.Context, name string, args *AzureCIUserArgs, opt
 	}
 
 	_, err = iam.NewUserPolicyAttachment(ctx, fmt.Sprintf("%v-deployment-policy-attachment", name), &iam.UserPolicyAttachmentArgs{
-		User:      args.User,
+		User:      user.Name,
 		PolicyArn: deploymentPolicy.Arn,
 	}, pulumi.Parent(self))
 	if err != nil {
 		return nil, fmt.Errorf("error attaching deployment policy to user: %w", err)
 	}
 
-	accessKey, err := iam.NewAccessKey(ctx, fmt.Sprintf("%s-access-key", name), &iam.AccessKeyArgs{
-		User:   args.User,
-		Status: pulumi.String("Active"),
-	}, pulumi.Parent(self), pulumi.AdditionalSecretOutputs([]string{"secret"}))
-	if err != nil {
-		return nil, fmt.Errorf("error creating access key: %w", err)
-	}
-
-	credentialsJSON := pulumi.All(accessKey.ID().ToStringOutput(), accessKey.Secret).ApplyT(func(vals []interface{}) (string, error) {
-		creds := map[string]string{
-			"access_key_id":     vals[0].(string),
-			"access_key_secret": vals[1].(string),
-		}
-		b, err := json.Marshal(creds)
-		if err != nil {
-			return "", fmt.Errorf("error marshaling credentials: %w", err)
-		}
-		return string(b), nil
-	}).(pulumi.StringOutput)
-
-	secret, err := secretsmanager.NewSecret(ctx, fmt.Sprintf("%s-credentials", name), &secretsmanager.SecretArgs{
-		Name:        pulumi.Sprintf("%s/access-key", args.User),
-		Description: pulumi.Sprintf("%s user access key credentials", args.User),
-		KmsKeyId:    args.KmsARN,
-		Tags: pulumi.StringMap{
-			"Purpose": PURPOSE,
-		},
-	}, pulumi.Parent(self))
-	if err != nil {
-		return nil, fmt.Errorf("error creating secret: %w", err)
-	}
-	self.SecretARN = secret.Arn
-
-	_, err = secretsmanager.NewSecretVersion(ctx, fmt.Sprintf("%s-credentials-version", name), &secretsmanager.SecretVersionArgs{
-		SecretId:     secret.ID(),
-		SecretString: credentialsJSON,
-	}, pulumi.Parent(self))
-	if err != nil {
-		return nil, fmt.Errorf("error creating secret version: %w", err)
-	}
-
 	_ = ctx.RegisterResourceOutputs(self, pulumi.Map{
-		"SecretARN": self.SecretARN,
+		"Username": self.Username,
 	})
 
 	return self, nil

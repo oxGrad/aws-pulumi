@@ -27,5 +27,5 @@ preview-ci stack="shared":
   export AWS_ACCESS_KEY_ID=$(echo $CREDS | awk '{print $1}')
   export AWS_SECRET_ACCESS_KEY=$(echo $CREDS | awk '{print $2}')
   export AWS_SESSION_TOKEN=$(echo $CREDS | awk '{print $3}')
-  pulumi preview --stack {{ stack }} --non-interactive
+  pulumi preview --stack {{ stack }} --non-interactive --diff
 

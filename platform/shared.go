@@ -13,12 +13,26 @@ func shared(ctx *pulumi.Context, cfg *stackCfg, provider *aws.Provider) error {
 	// -------------------------------------------------------
 	// IAM User: azure-ci
 	// -------------------------------------------------------
-	_, err := components.NewAzureCIUser(ctx, "azure-ci", &components.AzureCIUserArgs{
+	azureCIUser, err := components.NewAzureCIUser(ctx, "azure-ci", &components.AzureCIUserArgs{
 		User:   pulumi.String(cfg.azureCIUser),
 		KmsARN: pulumi.String(cfg.kmsARN),
 	}, pulumi.Provider(provider))
 	if err != nil {
 		return err
+	}
+
+	// -------------------------------------------------------
+	// Access Key + Secret Manager: azure-ci (optional)
+	// Controlled by ci:createAzureUserAccessKey config flag
+	// -------------------------------------------------------
+	if cfg.createAzureUserAccessKey {
+		_, err = components.NewPushAccessKeyToSecretManager(ctx, "azure-ci", &components.PushAccessKeyToSecretManagerArgs{
+			Username: azureCIUser.Username,
+			KmsARN:   pulumi.String(cfg.kmsARN),
+		}, pulumi.Provider(provider))
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

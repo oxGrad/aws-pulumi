@@ -2,7 +2,7 @@ login:
   pulumi login https://api.pulumi.com
 
 preview:
-  pulumi preview
+  pulumi preview --diff
 
 up:
   pulumi up

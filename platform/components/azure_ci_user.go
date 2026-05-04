@@ -80,7 +80,9 @@ func NewAzureCIUser(ctx *pulumi.Context, name string, args *AzureCIUserArgs, opt
 				"Sid":    "ECSService",
 				"Effect": "Allow",
 				"Action": []string{
+					"ecs:CreateService",
 					"ecs:UpdateService",
+					"ecs:DeleteService",
 					"ecs:DescribeServices",
 				},
 				"Resource": "*",
@@ -113,6 +115,18 @@ func NewAzureCIUser(ctx *pulumi.Context, name string, args *AzureCIUserArgs, opt
 				"Action": []string{
 					"ecs:DescribeTasks",
 					"ecs:ListTasks",
+				},
+				"Resource": "*",
+			},
+			{
+				"Sid":    "CloudWatchLogsAccess",
+				"Effect": "Allow",
+				"Action": []string{
+					"logs:CreateLogGroup",
+					"logs:CreateLogStream",
+					"logs:PutLogEvents",
+					"logs:DescribeLogGroups",
+					"logs:DescribeLogStreams",
 				},
 				"Resource": "*",
 			},

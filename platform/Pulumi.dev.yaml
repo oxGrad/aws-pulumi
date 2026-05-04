@@ -21,10 +21,17 @@ config:
           host: dev-aws-v3.bookcabin.com
           priority: 800
           port: 3000
-    # - name: backend
-    #   listenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-public-dev/3058638beebb0b05/38fe39d69bb93911
-    #   services:
-    #     - name: gobc-sandbox
-    #       host: devapiaws.bookcabin.com
-    #       priority: 1021
-    #       port: 3000
+    - name: backend
+      listenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-public-dev/3058638beebb0b05/38fe39d69bb93911
+      capacityProviderStrategies:
+        - capacityProvider: FARGATE_SPOT
+          weight: 1
+          base: 1
+        # - capacityProvider: FARGATE
+        #   weight: 1
+        #   base: 1
+      services:
+        - name: gobc-sandbox
+          host: devapiaws.bookcabin.com
+          priority: 1021
+          port: 3000

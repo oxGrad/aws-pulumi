@@ -15,6 +15,12 @@ new-stack env:
 lint:
   golangci-lint run
 
+preview-ci-shared:
+  PULUMI_CONFIG_PASSPHRASE=$PULUMI_CONFIG_PASSPHRASE_SHARED just preview-ci shared
+
+preview-ci-dev:
+  PULUMI_CONFIG_PASSPHRASE=$PULUMI_CONFIG_PASSPHRASE_DEV just preview-ci dev
+
 preview-ci stack="shared":
   #!/usr/bin/env bash
   set -euo pipefail

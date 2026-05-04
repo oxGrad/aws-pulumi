@@ -5,6 +5,7 @@ import (
 
 	"github.com/pulumi/pulumi-aws/sdk/v7/go/aws"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+	"github.com/pulumi/pulumi/sdk/v3/go/pulumi/config"
 )
 
 func main() {
@@ -17,7 +18,9 @@ func main() {
 		// -------------------------------------------------------
 		// 0. AWS Provider with Default Tags
 		// -------------------------------------------------------
+		awsCfg := config.New(ctx, "aws")
 		provider, err := aws.NewProvider(ctx, "aws", &aws.ProviderArgs{
+			Region: pulumi.String(awsCfg.Get("region")),
 			DefaultTags: &aws.ProviderDefaultTagsArgs{
 				Tags: pulumi.StringMap{
 					"Environment":    pulumi.String(ctx.Stack()),

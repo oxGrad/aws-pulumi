@@ -33,5 +33,6 @@ config:
       services:
         - name: gobc-sandbox
           host: devapiaws.bookcabin.com
+          path: /gobc-sandbox
           priority: 1021
           port: 3000

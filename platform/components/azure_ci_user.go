@@ -73,6 +73,7 @@ func NewAzureCIUser(ctx *pulumi.Context, name string, args *AzureCIUserArgs, opt
 				"Action": []string{
 					"ecs:RegisterTaskDefinition",
 					"ecs:DescribeTaskDefinition",
+					"ecs:TagResource",
 				},
 				"Resource": "*",
 			},

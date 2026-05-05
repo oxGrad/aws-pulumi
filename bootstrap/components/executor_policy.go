@@ -146,6 +146,26 @@ func NewExecutorPolicy(ctx *pulumi.Context, name string, args *ExecutorPolicyArg
 					"Resource": "*",
 				},
 				{
+					"Sid":    "ECRManagement",
+					"Effect": "Allow",
+					"Action": []string{
+						"ecr:CreateRepository",
+						"ecr:DeleteRepository",
+						"ecr:DescribeRepositories",
+						"ecr:GetRepositoryPolicy",
+						"ecr:SetRepositoryPolicy",
+						"ecr:PutImageTagMutability",
+						"ecr:PutImageScanningConfiguration",
+						"ecr:TagResource",
+						"ecr:UntagResource",
+						"ecr:ListTagsForResource",
+						"ecr:PutLifecyclePolicy",
+						"ecr:GetLifecyclePolicy",
+						"ecr:DeleteLifecyclePolicy",
+					},
+					"Resource": "*",
+				},
+				{
 					"Sid":    "SecretsManagerAccess",
 					"Effect": "Allow",
 					"Action": []string{

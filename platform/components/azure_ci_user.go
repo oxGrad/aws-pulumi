@@ -128,6 +128,7 @@ func NewAzureCIUser(ctx *pulumi.Context, name string, args *AzureCIUserArgs, opt
 					"logs:PutLogEvents",
 					"logs:DescribeLogGroups",
 					"logs:DescribeLogStreams",
+					"logs:TagResource",
 				},
 				"Resource": "*",
 			},

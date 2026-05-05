@@ -12,6 +12,7 @@ type TargetGroup struct {
 
 type TargetGroupArgs struct {
 	Name                pulumi.StringInput
+	Service             pulumi.StringInput
 	VpcID               pulumi.StringInput
 	Port                pulumi.IntInput
 	Protocol            pulumi.StringInput
@@ -40,7 +41,8 @@ func NewTargetGroup(ctx *pulumi.Context, name string, args *TargetGroupArgs, opt
 			Interval:           args.HealthCheckInterval,
 		},
 		Tags: pulumi.StringMap{
-			"Name": args.Name,
+			"Name":    args.Name,
+			"Service": args.Service,
 		},
 	}, pulumi.Parent(self))
 	if err != nil {

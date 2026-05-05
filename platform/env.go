@@ -10,6 +10,26 @@ import (
 
 // env deploys environment-specific resources (ECS clusters, target groups, listener rules) for dev, stag, and prod stacks.
 func env(ctx *pulumi.Context, cfg *stackCfg, provider *aws.Provider) error {
+	// ECR repositories — one per unique service name across all clusters
+	provisionedECR := map[string]bool{}
+	for _, cluster := range cfg.clusters {
+		for _, svc := range cluster.Services {
+			if provisionedECR[svc.Name] {
+				continue
+			}
+			provisionedECR[svc.Name] = true
+
+			repo, err := components.NewECRRepository(ctx, svc.Name, &components.ECRRepositoryArgs{
+				Name: pulumi.String(svc.Name),
+			}, pulumi.Provider(provider))
+			if err != nil {
+				return err
+			}
+			ctx.Export(fmt.Sprintf("%s.ecrURL", svc.Name), repo.URL)
+			ctx.Export(fmt.Sprintf("%s.ecrARN", svc.Name), repo.ARN)
+		}
+	}
+
 	for _, cluster := range cfg.clusters {
 		clusterName := fmt.Sprintf("bc-%s-cluster-%s", cluster.Name, ctx.Stack())
 
@@ -49,6 +69,7 @@ func env(ctx *pulumi.Context, cfg *stackCfg, provider *aws.Provider) error {
 
 			tg, err := components.NewTargetGroup(ctx, resourceName, &components.TargetGroupArgs{
 				Name:                pulumi.String(resourceName),
+				Service:             pulumi.String(svc.Name),
 				VpcID:               pulumi.String(cfg.vpcID),
 				Port:                pulumi.Int(port),
 				Protocol:            pulumi.String("HTTP"),

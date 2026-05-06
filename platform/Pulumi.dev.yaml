@@ -14,11 +14,17 @@ config:
           base: 0
       services:
         - name: esimtools
-          host: dev-esimtools.bookcabin.com
+          hosts:
+            - dev-esimtools.bookcabin.com
+          paths:
+            - /*
           priority: 1020
           port: 3000
         - name: ota-bc-ui
-          host: dev-aws-v3.bookcabin.com
+          hosts:
+            - dev-aws-v3.bookcabin.com
+          paths:
+            - /*
           priority: 800
           port: 3000
     - name: backend
@@ -32,7 +38,10 @@ config:
         #   base: 1
       services:
         - name: gobc-sandbox
-          host: devapiaws.bookcabin.com
-          path: /gobc-sandbox
+          hosts:
+            - devapiaws.bookcabin.com
+          paths:
+            - /gobc-sandbox/*
+          stripPathPrefix: true
           priority: 1021
           port: 8080

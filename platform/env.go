@@ -64,9 +64,9 @@ func env(ctx *pulumi.Context, cfg *stackCfg, provider *aws.Provider) error {
 		for _, svc := range cluster.Services {
 			resourceName := fmt.Sprintf("bc-%s-%s-%s", cluster.Name, svc.Name, ctx.Stack())
 
-			path := svc.Path
-			if path == "" {
-				path = "/*"
+			paths := svc.Paths
+			if len(paths) == 0 {
+				paths = []string{"/*"}
 			}
 
 			port := svc.Port
@@ -98,11 +98,12 @@ func env(ctx *pulumi.Context, cfg *stackCfg, provider *aws.Provider) error {
 			}
 
 			rule, err := components.NewListenerRule(ctx, resourceName, &components.ListenerRuleArgs{
-				ListenerARN:    pulumi.String(cluster.ListenerARN),
-				TargetGroupARN: tg.ARN,
-				Host:           pulumi.String(svc.Host),
-				Path:           pulumi.String(path),
-				Priority:       pulumi.Int(svc.Priority),
+				ListenerARN:     pulumi.String(cluster.ListenerARN),
+				TargetGroupARN:  tg.ARN,
+				Hosts:           pulumi.ToStringArray(svc.Hosts),
+				Paths:           pulumi.ToStringArray(paths),
+				StripPathPrefix: svc.StripPathPrefix,
+				Priority:        pulumi.Int(svc.Priority),
 			}, pulumi.Provider(provider))
 			if err != nil {
 				return err

@@ -7,5 +7,8 @@ config:
       listenerARN: PLACEHOLDER_LISTENER_ARN
       services:
         - name: web
-          host: web.example.com
+          hosts:
+            - web.example.com
+          paths:
+            - /*
           priority: 100

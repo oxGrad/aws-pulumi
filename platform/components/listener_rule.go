@@ -1,7 +1,7 @@
 package components
 
 import (
-	"strings"
+	"fmt"
 
 	"github.com/pulumi/pulumi-aws/sdk/v7/go/aws/lb"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
@@ -17,11 +17,18 @@ type ListenerRuleArgs struct {
 	TargetGroupARN  pulumi.StringInput
 	Hosts           pulumi.StringArrayInput
 	Paths           pulumi.StringArrayInput
+	// StripPathPrefix is a Go-time bool (not a Pulumi input) because the tag
+	// value must be known before resource construction. It cannot depend on
+	// a Pulumi output.
 	StripPathPrefix bool
 	Priority        pulumi.IntInput
 }
 
 func NewListenerRule(ctx *pulumi.Context, name string, args *ListenerRuleArgs, opts ...pulumi.ResourceOption) (*ListenerRule, error) {
+	if args.Hosts == nil || args.Paths == nil {
+		return nil, fmt.Errorf("NewListenerRule %q: Hosts and Paths must not be nil", name)
+	}
+
 	self := &ListenerRule{}
 	err := ctx.RegisterComponentResource("platform:lb:listener-rule", name, self, opts...)
 	if err != nil {
@@ -71,12 +78,3 @@ func NewListenerRule(ctx *pulumi.Context, name string, args *ListenerRuleArgs, o
 	return self, nil
 }
 
-// stripPrefix returns the static prefix portion of a path pattern.
-// "/gobc-sandbox/*" → "/gobc-sandbox"
-func stripPrefix(pathPattern string) string {
-	idx := strings.Index(pathPattern, "*")
-	if idx < 0 {
-		return pathPattern
-	}
-	return strings.TrimRight(pathPattern[:idx], "/")
-}

@@ -10,13 +10,14 @@ import (
 )
 
 type serviceConfig struct {
-	Name                string `json:"name"`
-	Host                string `json:"host"`
-	Path                string `json:"path"`
-	Priority            int    `json:"priority"`
-	Port                int    `json:"port"`
-	HealthCheckPath     string `json:"healthCheckPath"`
-	HealthCheckInterval int    `json:"healthCheckInterval"`
+	Name                string   `json:"name"`
+	Hosts               []string `json:"hosts"`
+	Paths               []string `json:"paths"`
+	StripPathPrefix     bool     `json:"stripPathPrefix"`
+	Priority            int      `json:"priority"`
+	Port                int      `json:"port"`
+	HealthCheckPath     string   `json:"healthCheckPath"`
+	HealthCheckInterval int      `json:"healthCheckInterval"`
 }
 
 type clusterConfig struct {

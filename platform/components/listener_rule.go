@@ -13,14 +13,15 @@ type ListenerRule struct {
 }
 
 type ListenerRuleArgs struct {
-	ListenerARN     pulumi.StringInput
-	TargetGroupARN  pulumi.StringInput
-	Hosts           pulumi.StringArrayInput
-	Paths           pulumi.StringArrayInput
+	ListenerARN    pulumi.StringInput
+	TargetGroupARN pulumi.StringInput
+	Hosts          pulumi.StringArrayInput
+	Paths          pulumi.StringArrayInput
 	// StripPathPrefix is a Go-time bool (not a Pulumi input) because the tag
 	// value must be known before resource construction. It cannot depend on
 	// a Pulumi output.
 	StripPathPrefix bool
+	PathPrefix      string
 	Priority        pulumi.IntInput
 }
 
@@ -38,19 +39,34 @@ func NewListenerRule(ctx *pulumi.Context, name string, args *ListenerRuleArgs, o
 	tags := pulumi.StringMap{
 		"Name": pulumi.String(name),
 	}
-	if args.StripPathPrefix {
-		tags["PathTransform"] = pulumi.String("strip-prefix")
+
+	actions := lb.ListenerRuleActionArray{}
+
+	var transforms lb.ListenerRuleTransformArray
+	if args.StripPathPrefix && args.PathPrefix != "" {
+		pattern := fmt.Sprintf("^%s/(.*)$", args.PathPrefix)
+		transforms = lb.ListenerRuleTransformArray{
+			&lb.ListenerRuleTransformArgs{
+				Type:           pulumi.String("url-rewrite"),
+				UrlRewriteConfig: &lb.ListenerRuleTransformUrlRewriteConfigArgs{
+					Rewrite: &lb.ListenerRuleTransformUrlRewriteConfigRewriteArgs{
+						Regex:  pulumi.String(pattern),
+						Replace: pulumi.String("/$1"),
+					},
+				},
+			},
+		}
 	}
+
+	actions = append(actions, &lb.ListenerRuleActionArgs{
+		Type:           pulumi.String("forward"),
+		TargetGroupArn: args.TargetGroupARN,
+	})
 
 	rule, err := lb.NewListenerRule(ctx, name, &lb.ListenerRuleArgs{
 		ListenerArn: args.ListenerARN,
 		Priority:    args.Priority,
-		Actions: lb.ListenerRuleActionArray{
-			&lb.ListenerRuleActionArgs{
-				Type:           pulumi.String("forward"),
-				TargetGroupArn: args.TargetGroupARN,
-			},
-		},
+		Actions:     actions,
 		Conditions: lb.ListenerRuleConditionArray{
 			&lb.ListenerRuleConditionArgs{
 				HostHeader: &lb.ListenerRuleConditionHostHeaderArgs{
@@ -63,7 +79,8 @@ func NewListenerRule(ctx *pulumi.Context, name string, args *ListenerRuleArgs, o
 				},
 			},
 		},
-		Tags: tags,
+		Tags:       tags,
+		Transforms: transforms,
 	}, pulumi.Parent(self))
 	if err != nil {
 		return nil, err
@@ -77,4 +94,3 @@ func NewListenerRule(ctx *pulumi.Context, name string, args *ListenerRuleArgs, o
 
 	return self, nil
 }
-

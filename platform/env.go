@@ -101,12 +101,21 @@ func env(ctx *pulumi.Context, cfg *stackCfg, provider *aws.Provider) error {
 				return err
 			}
 
+			var pathPrefix string
+			if svc.StripPathPrefix && len(paths) > 0 {
+				pathPrefix = paths[0]
+				if len(pathPrefix) > 2 && pathPrefix[len(pathPrefix)-2:] == "/*" {
+					pathPrefix = pathPrefix[:len(pathPrefix)-2]
+				}
+			}
+
 			rule, err := components.NewListenerRule(ctx, resourceName, &components.ListenerRuleArgs{
 				ListenerARN:     pulumi.String(cluster.ListenerARN),
 				TargetGroupARN:  tg.ARN,
 				Hosts:           pulumi.ToStringArray(svc.Hosts),
 				Paths:           pulumi.ToStringArray(paths),
 				StripPathPrefix: svc.StripPathPrefix,
+				PathPrefix:      pathPrefix,
 				Priority:        pulumi.Int(svc.Priority),
 			}, pulumi.Provider(provider))
 			if err != nil {

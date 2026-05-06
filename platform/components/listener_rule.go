@@ -1,6 +1,8 @@
 package components
 
 import (
+	"strings"
+
 	"github.com/pulumi/pulumi-aws/sdk/v7/go/aws/lb"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
@@ -11,11 +13,12 @@ type ListenerRule struct {
 }
 
 type ListenerRuleArgs struct {
-	ListenerARN    pulumi.StringInput
-	TargetGroupARN pulumi.StringInput
-	Host           pulumi.StringInput
-	Path           pulumi.StringInput
-	Priority       pulumi.IntInput
+	ListenerARN     pulumi.StringInput
+	TargetGroupARN  pulumi.StringInput
+	Hosts           pulumi.StringArrayInput
+	Paths           pulumi.StringArrayInput
+	StripPathPrefix bool
+	Priority        pulumi.IntInput
 }
 
 func NewListenerRule(ctx *pulumi.Context, name string, args *ListenerRuleArgs, opts ...pulumi.ResourceOption) (*ListenerRule, error) {
@@ -23,6 +26,13 @@ func NewListenerRule(ctx *pulumi.Context, name string, args *ListenerRuleArgs, o
 	err := ctx.RegisterComponentResource("platform:lb:listener-rule", name, self, opts...)
 	if err != nil {
 		return nil, err
+	}
+
+	tags := pulumi.StringMap{
+		"Name": pulumi.String(name),
+	}
+	if args.StripPathPrefix {
+		tags["PathTransform"] = pulumi.String("strip-prefix")
 	}
 
 	rule, err := lb.NewListenerRule(ctx, name, &lb.ListenerRuleArgs{
@@ -37,18 +47,16 @@ func NewListenerRule(ctx *pulumi.Context, name string, args *ListenerRuleArgs, o
 		Conditions: lb.ListenerRuleConditionArray{
 			&lb.ListenerRuleConditionArgs{
 				HostHeader: &lb.ListenerRuleConditionHostHeaderArgs{
-					Values: pulumi.StringArray{args.Host},
+					Values: args.Hosts,
 				},
 			},
 			&lb.ListenerRuleConditionArgs{
 				PathPattern: &lb.ListenerRuleConditionPathPatternArgs{
-					Values: pulumi.StringArray{args.Path},
+					Values: args.Paths,
 				},
 			},
 		},
-		Tags: pulumi.StringMap{
-			"Name": pulumi.String(name),
-		},
+		Tags: tags,
 	}, pulumi.Parent(self))
 	if err != nil {
 		return nil, err
@@ -61,4 +69,14 @@ func NewListenerRule(ctx *pulumi.Context, name string, args *ListenerRuleArgs, o
 	})
 
 	return self, nil
+}
+
+// stripPrefix returns the static prefix portion of a path pattern.
+// "/gobc-sandbox/*" → "/gobc-sandbox"
+func stripPrefix(pathPattern string) string {
+	idx := strings.Index(pathPattern, "*")
+	if idx < 0 {
+		return pathPattern
+	}
+	return strings.TrimRight(pathPattern[:idx], "/")
 }

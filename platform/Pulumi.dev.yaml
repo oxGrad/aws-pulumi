@@ -50,6 +50,7 @@ config:
             - devapiaws.bookcabin.com
           paths:
             - /pkfare-flight/*
+          HealthCheckPath: /api/Search/HealthCheck
           stripPathPrefix: true
           priority: 1022
           port: 8080

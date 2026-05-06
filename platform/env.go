@@ -69,6 +69,10 @@ func env(ctx *pulumi.Context, cfg *stackCfg, provider *aws.Provider) error {
 				paths = []string{"/*"}
 			}
 
+			if len(svc.Hosts) == 0 {
+				return fmt.Errorf("service %q in cluster %q has no hosts configured", svc.Name, cluster.Name)
+			}
+
 			port := svc.Port
 			if port == 0 {
 				port = 80

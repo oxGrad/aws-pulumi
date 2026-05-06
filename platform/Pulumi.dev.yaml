@@ -45,3 +45,11 @@ config:
           stripPathPrefix: true
           priority: 1021
           port: 8080
+        - name: pkfare-flight
+          hosts:
+            - devapiaws.bookcabin.com
+          paths:
+            - /pkfare-flight/*
+          stripPathPrefix: true
+          priority: 1022
+          port: 8080

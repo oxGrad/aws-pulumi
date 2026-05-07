@@ -90,7 +90,7 @@ func env(ctx *pulumi.Context, cfg *stackCfg, provider *aws.Provider) error {
 
 			tg, err := components.NewTargetGroup(ctx, resourceName, &components.TargetGroupArgs{
 				Name:                pulumi.String(resourceName),
-				Service:             pulumi.String(svc.Name),
+				Service:             pulumi.String(fmt.Sprintf("%s-%s", svc.Name, ctx.Stack())),
 				VpcID:               pulumi.String(cfg.vpcID),
 				Port:                pulumi.Int(port),
 				Protocol:            pulumi.String("HTTP"),

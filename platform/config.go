@@ -2,30 +2,12 @@ package main
 
 import (
 	"fmt"
-	"platform/components"
+	"platform/composites"
 
 	"github.com/pulumi/pulumi-aws/sdk/v7/go/aws"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi/config"
 )
-
-type serviceConfig struct {
-	Name                string   `json:"name"`
-	Hosts               []string `json:"hosts"`
-	Paths               []string `json:"paths"`
-	StripPathPrefix     bool     `json:"stripPathPrefix"`
-	Priority            int      `json:"priority"`
-	Port                int      `json:"port"`
-	HealthCheckPath     string   `json:"healthCheckPath"`
-	HealthCheckInterval int      `json:"healthCheckInterval"`
-}
-
-type clusterConfig struct {
-	Name                       string                                `json:"name"`
-	ListenerARN                string                                `json:"listenerARN"`
-	Services                   []serviceConfig                       `json:"services"`
-	CapacityProviderStrategies []components.CapacityProviderStrategy `json:"capacityProviderStrategies"`
-}
 
 type stackCfg struct {
 	identity                 *aws.GetCallerIdentityResult
@@ -34,7 +16,7 @@ type stackCfg struct {
 	kmsARN                   string
 	platformManagedBy        string
 	platformSource           string
-	clusters                 []clusterConfig
+	clusters                 []composites.ClusterConfig
 	vpcID                    string
 }
 

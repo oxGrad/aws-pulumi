@@ -42,6 +42,7 @@ config:
             - devapiaws.bookcabin.com
           paths:
             - /gobc-sandbox/*
+          HealthCheckPath: /api/ping
           stripPathPrefix: true
           priority: 1021
           port: 8080

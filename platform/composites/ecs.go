@@ -10,19 +10,22 @@ import (
 )
 
 type ServiceConfig struct {
-	Name                string   `json:"name"`
-	Hosts               []string `json:"hosts"`
-	Paths               []string `json:"paths"`
-	StripPathPrefix     bool     `json:"stripPathPrefix"`
-	Priority            int      `json:"priority"`
-	Port                int      `json:"port"`
-	HealthCheckPath     string   `json:"healthCheckPath"`
-	HealthCheckInterval int      `json:"healthCheckInterval"`
+	Name                string                   `json:"name"`
+	Public              bool                     `json:"public"`
+	Hosts               []string                 `json:"hosts"`
+	Paths               []string                 `json:"paths"`
+	StripPathPrefix     bool                     `json:"stripPathPrefix"`
+	Priority            int                      `json:"priority"`
+	Port                int                      `json:"port"`
+	HealthCheckPath     string                   `json:"healthCheckPath"`
+	HealthCheckInterval int                      `json:"healthCheckInterval"`
+	Monitoring          *ServiceMonitoringConfig `json:"monitoring,omitempty"`
 }
 
 type ClusterConfig struct {
 	Name                       string                                `json:"name"`
-	ListenerARN                string                                `json:"listenerARN"`
+	PublicListenerARN          string                                `json:"publicListenerARN"`
+	PrivateListenerARN         string                                `json:"privateListenerARN"`
 	Services                   []ServiceConfig                       `json:"services"`
 	CapacityProviderStrategies []components.CapacityProviderStrategy `json:"capacityProviderStrategies"`
 }
@@ -35,7 +38,22 @@ type ProvisionECSArgs struct {
 	AWSRegion      string
 }
 
-func ProvisionECS(ctx *pulumi.Context, args ProvisionECSArgs, provider *aws.Provider) error {
+// ProvisionedService holds outputs for a single provisioned service.
+type ProvisionedService struct {
+	TargetGroupARN  pulumi.StringOutput
+	ListenerRuleARN pulumi.StringOutput
+	ListenerARN     string // the listener ARN selected for this service (public or private)
+}
+
+// ProvisionedECS is keyed by cluster config name then service name.
+type ProvisionedECS struct {
+	Clusters map[string]map[string]*ProvisionedService
+}
+
+func ProvisionECS(ctx *pulumi.Context, args ProvisionECSArgs, provider *aws.Provider) (*ProvisionedECS, error) {
+	result := &ProvisionedECS{
+		Clusters: make(map[string]map[string]*ProvisionedService),
+	}
 	envAgnosticProvider, err := aws.NewProvider(ctx, "aws-ecr", &aws.ProviderArgs{
 		Region: pulumi.String(args.AWSRegion),
 		DefaultTags: &aws.ProviderDefaultTagsArgs{
@@ -46,14 +64,14 @@ func ProvisionECS(ctx *pulumi.Context, args ProvisionECSArgs, provider *aws.Prov
 		},
 	})
 	if err != nil {
-		return fmt.Errorf("error creating ECR provider: %w", err)
+		return nil, fmt.Errorf("error creating ECR provider: %w", err)
 	}
 
 	// ECR repositories — one per unique service name across all clusters
 	provisionedECR := map[string]bool{}
 	for _, cluster := range args.Clusters {
 		for _, svc := range cluster.Services {
-			if provisionedECR[svc.Name] {
+			if svc.Name == "" || provisionedECR[svc.Name] {
 				continue
 			}
 			provisionedECR[svc.Name] = true
@@ -62,7 +80,7 @@ func ProvisionECS(ctx *pulumi.Context, args ProvisionECSArgs, provider *aws.Prov
 				Name: pulumi.String(svc.Name),
 			}, pulumi.Provider(envAgnosticProvider))
 			if err != nil {
-				return err
+				return nil, err
 			}
 			ctx.Export(fmt.Sprintf("%s.ecrURL", svc.Name), repo.URL)
 			ctx.Export(fmt.Sprintf("%s.ecrARN", svc.Name), repo.ARN)
@@ -77,22 +95,45 @@ func ProvisionECS(ctx *pulumi.Context, args ProvisionECSArgs, provider *aws.Prov
 			CapacityProviderStrategies: cluster.CapacityProviderStrategies,
 		}, pulumi.Provider(provider))
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		ctx.Export(fmt.Sprintf("%s.clusterName", cluster.Name), ecsCluster.ClusterName)
 		ctx.Export(fmt.Sprintf("%s.clusterARN", cluster.Name), ecsCluster.ClusterARN)
 
+		result.Clusters[cluster.Name] = make(map[string]*ProvisionedService)
+
 		for _, svc := range cluster.Services {
 			resourceName := fmt.Sprintf("bc-%s-%s-%s", cluster.Name, svc.Name, ctx.Stack())
 
+			if svc.Name == "" {
+				return nil, fmt.Errorf("cluster %q has a service with an empty name", cluster.Name)
+			}
 			if len(svc.Hosts) == 0 {
-				return fmt.Errorf("service %q in cluster %q has no hosts configured", svc.Name, cluster.Name)
+				return nil, fmt.Errorf("service %q in cluster %q has no hosts configured", svc.Name, cluster.Name)
 			}
 
-			ps, err := provisionService(ctx, resourceName, svc, cluster.ListenerARN, args.VpcID, provider)
+			listenerARN := cluster.PrivateListenerARN
+			if svc.Public {
+				listenerARN = cluster.PublicListenerARN
+			}
+			if listenerARN == "" {
+				visibility := "private"
+				if svc.Public {
+					visibility = "public"
+				}
+				return nil, fmt.Errorf("service %q in cluster %q requires a %s listener ARN but none is configured", svc.Name, cluster.Name, visibility)
+			}
+
+			ps, err := provisionService(ctx, resourceName, svc, listenerARN, args.VpcID, provider)
 			if err != nil {
-				return err
+				return nil, err
+			}
+
+			result.Clusters[cluster.Name][svc.Name] = &ProvisionedService{
+				TargetGroupARN:  ps.targetGroupARN,
+				ListenerRuleARN: ps.listenerRuleARN,
+				ListenerARN:     listenerARN,
 			}
 
 			ctx.Export(fmt.Sprintf("%s.%s.targetGroupARN", cluster.Name, svc.Name), ps.targetGroupARN)
@@ -100,7 +141,7 @@ func ProvisionECS(ctx *pulumi.Context, args ProvisionECSArgs, provider *aws.Prov
 		}
 	}
 
-	return nil
+	return result, nil
 }
 
 type provisionedService struct {

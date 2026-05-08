@@ -74,7 +74,7 @@ config:
         - name: cithotel-search
           public: false
           hosts:
-            - cithotel-search-dev.bookcabin.com
+            - cithotel-search-dev.internal.bookcabin.com
           paths:
             - /*
           HealthCheckPath: /index.html

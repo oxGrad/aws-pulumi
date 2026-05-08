@@ -51,6 +51,16 @@ config:
           stripPathPrefix: true
           priority: 1021
           port: 8080
+        - name: gobc-travel
+          public: true
+          hosts:
+            - devapiaws.bookcabin.com
+          paths:
+            - /gobc-travel/*
+          HealthCheckPath: /health
+          stripPathPrefix: true
+          priority: 1018
+          port: 8080
         - name: pkfare-flight
           public: true
           hosts:
@@ -64,9 +74,9 @@ config:
         - name: cithotel-search
           public: false
           hosts:
-            - devapiaws.bookcabin.com
+            - cithotel-search-dev.bookcabin.com
           paths:
-            - /cithotel-search/*
+            - /*
           HealthCheckPath: /index.html
           stripPathPrefix: false
           priority: 104

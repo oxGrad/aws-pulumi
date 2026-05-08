@@ -18,6 +18,7 @@ type stackCfg struct {
 	platformSource           string
 	clusters                 []composites.ClusterConfig
 	vpcID                    string
+	notifications            composites.NotificationsConfig
 }
 
 func loadConfig(ctx *pulumi.Context) (*stackCfg, error) {
@@ -51,6 +52,10 @@ func loadConfig(ctx *pulumi.Context) (*stackCfg, error) {
 		}
 		networkCfg := config.New(ctx, "network")
 		sCfg.vpcID = networkCfg.Get("vpcId")
+
+		notifCfg := config.New(ctx, "notifications")
+		// Error is intentionally ignored — notifications are optional.
+		_ = notifCfg.GetObject("endpoints", &sCfg.notifications)
 	}
 
 	return sCfg, nil

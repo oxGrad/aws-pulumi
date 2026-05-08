@@ -4,7 +4,8 @@ config:
   network:vpcId: vpc-04b31b9fabf5f0eec
   cluster:clusters:
     - name: frontend
-      listenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-public-dev/3058638beebb0b05/38fe39d69bb93911
+      publicListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-public-dev/3058638beebb0b05/38fe39d69bb93911
+      privateListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-private-dev/881aa8428c606707/539f0089fb48f000
       capacityProviderStrategies:
         - capacityProvider: FARGATE
           weight: 1
@@ -14,6 +15,7 @@ config:
           base: 0
       services:
         - name: esimtools
+          public: true
           hosts:
             - dev-esimtools.bookcabin.com
           paths:
@@ -21,6 +23,7 @@ config:
           priority: 1020
           port: 3000
         - name: ota-bc-ui
+          public: true
           hosts:
             - dev-aws-v3.bookcabin.com
           paths:
@@ -28,7 +31,8 @@ config:
           priority: 800
           port: 3000
     - name: backend
-      listenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-public-dev/3058638beebb0b05/38fe39d69bb93911
+      publicListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-public-dev/3058638beebb0b05/38fe39d69bb93911
+      privateListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-private-dev/881aa8428c606707/539f0089fb48f000
       capacityProviderStrategies:
         - capacityProvider: FARGATE_SPOT
           weight: 1
@@ -38,6 +42,7 @@ config:
         #   base: 1
       services:
         - name: gobc-sandbox
+          public: true
           hosts:
             - devapiaws.bookcabin.com
           paths:
@@ -47,6 +52,7 @@ config:
           priority: 1021
           port: 8080
         - name: pkfare-flight
+          public: true
           hosts:
             - devapiaws.bookcabin.com
           paths:
@@ -54,4 +60,14 @@ config:
           HealthCheckPath: /api/Search/HealthCheck
           stripPathPrefix: true
           priority: 1022
+          port: 8080
+        - name: cithotel-search
+          public: false
+          hosts:
+            - devapiaws.bookcabin.com
+          paths:
+            - /cithotel-search/*
+          HealthCheckPath: /index.html
+          stripPathPrefix: false
+          priority: 104
           port: 8080

@@ -10,6 +10,10 @@ import (
 )
 
 func env(ctx *pulumi.Context, cfg *stackCfg, provider *aws.Provider) error {
+	if err := composites.ProvisionServiceConnect(ctx, cfg.serviceConnectNamespaces, provider); err != nil {
+		return err
+	}
+
 	awsCfg := config.New(ctx, "aws")
 	result, err := composites.ProvisionECS(ctx, composites.ProvisionECSArgs{
 		Clusters:       cfg.clusters,

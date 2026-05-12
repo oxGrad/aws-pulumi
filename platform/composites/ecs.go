@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/pulumi/pulumi-aws/sdk/v7/go/aws"
+	"github.com/pulumi/pulumi-aws/sdk/v7/go/aws/servicediscovery"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
@@ -36,6 +37,20 @@ type ProvisionECSArgs struct {
 	ManagedBy      string
 	PlatformSource string
 	AWSRegion      string
+}
+
+// ProvisionServiceConnect creates HTTP namespaces for service connect and exports their ARNs.
+func ProvisionServiceConnect(ctx *pulumi.Context, namespaces []string, provider *aws.Provider) error {
+	for _, name := range namespaces {
+		ns, err := servicediscovery.NewHttpNamespace(ctx, fmt.Sprintf("sc-namespace-%s", name), &servicediscovery.HttpNamespaceArgs{
+			Name: pulumi.String(name),
+		}, pulumi.Provider(provider))
+		if err != nil {
+			return fmt.Errorf("error creating service connect namespace %q: %w", name, err)
+		}
+		ctx.Export(fmt.Sprintf("serviceConnect.%s.arn", name), ns.Arn)
+	}
+	return nil
 }
 
 // ProvisionedService holds outputs for a single provisioned service.
@@ -87,18 +102,12 @@ func ProvisionECS(ctx *pulumi.Context, args ProvisionECSArgs, provider *aws.Prov
 		}
 	}
 
-	scNamespace := ctx.Stack() + ".internal"
-	if ctx.Stack() == "prod" {
-		scNamespace = "internal"
-	}
-
 	for _, cluster := range args.Clusters {
 		clusterName := fmt.Sprintf("bc-%s-cluster-%s", cluster.Name, ctx.Stack())
 
 		ecsCluster, err := components.NewECSCluster(ctx, clusterName, &components.ECSClusterArgs{
 			ClusterName:                pulumi.String(clusterName),
 			CapacityProviderStrategies: cluster.CapacityProviderStrategies,
-			ServiceConnectNamespace:    scNamespace,
 		}, pulumi.Provider(provider))
 		if err != nil {
 			return nil, err
@@ -106,7 +115,6 @@ func ProvisionECS(ctx *pulumi.Context, args ProvisionECSArgs, provider *aws.Prov
 
 		ctx.Export(fmt.Sprintf("%s.clusterName", cluster.Name), ecsCluster.ClusterName)
 		ctx.Export(fmt.Sprintf("%s.clusterARN", cluster.Name), ecsCluster.ClusterARN)
-		ctx.Export(fmt.Sprintf("%s.serviceConnectNamespaceARN", cluster.Name), ecsCluster.ServiceConnectNamespace)
 
 		result.Clusters[cluster.Name] = make(map[string]*ProvisionedService)
 

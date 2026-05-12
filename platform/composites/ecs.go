@@ -87,12 +87,18 @@ func ProvisionECS(ctx *pulumi.Context, args ProvisionECSArgs, provider *aws.Prov
 		}
 	}
 
+	scNamespace := ctx.Stack() + ".internal"
+	if ctx.Stack() == "prod" {
+		scNamespace = "internal"
+	}
+
 	for _, cluster := range args.Clusters {
 		clusterName := fmt.Sprintf("bc-%s-cluster-%s", cluster.Name, ctx.Stack())
 
 		ecsCluster, err := components.NewECSCluster(ctx, clusterName, &components.ECSClusterArgs{
 			ClusterName:                pulumi.String(clusterName),
 			CapacityProviderStrategies: cluster.CapacityProviderStrategies,
+			ServiceConnectNamespace:    scNamespace,
 		}, pulumi.Provider(provider))
 		if err != nil {
 			return nil, err
@@ -100,6 +106,7 @@ func ProvisionECS(ctx *pulumi.Context, args ProvisionECSArgs, provider *aws.Prov
 
 		ctx.Export(fmt.Sprintf("%s.clusterName", cluster.Name), ecsCluster.ClusterName)
 		ctx.Export(fmt.Sprintf("%s.clusterARN", cluster.Name), ecsCluster.ClusterARN)
+		ctx.Export(fmt.Sprintf("%s.serviceConnectNamespaceARN", cluster.Name), ecsCluster.ServiceConnectNamespace)
 
 		result.Clusters[cluster.Name] = make(map[string]*ProvisionedService)
 

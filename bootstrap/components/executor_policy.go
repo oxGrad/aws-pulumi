@@ -204,6 +204,21 @@ func NewExecutorPolicy(ctx *pulumi.Context, name string, args *ExecutorPolicyArg
 					"Resource": "*",
 				},
 				{
+					"Sid":    "ServiceDiscoveryManagement",
+					"Effect": "Allow",
+					"Action": []string{
+						"servicediscovery:CreateHttpNamespace",
+						"servicediscovery:DeleteNamespace",
+						"servicediscovery:GetNamespace",
+						"servicediscovery:GetOperation",
+						"servicediscovery:ListNamespaces",
+						"servicediscovery:TagResource",
+						"servicediscovery:UntagResource",
+						"servicediscovery:ListTagsForResource",
+					},
+					"Resource": "*",
+				},
+				{
 					"Sid":    "SecretsManagerAccess",
 					"Effect": "Allow",
 					"Action": []string{

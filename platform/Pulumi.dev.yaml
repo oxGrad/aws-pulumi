@@ -2,6 +2,8 @@ encryptionsalt: v1:BS1G8tE0UFY=:v1:oAsmdTmrDImB33KH:4WD41H6g8vdlTjJ4sqIgHhIhgjaZ
 config:
   aws:region: ap-southeast-1
   network:vpcId: vpc-04b31b9fabf5f0eec
+  cluster:serviceConnect:
+    - dev.internal
   cluster:clusters:
     - name: frontend
       publicListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-public-dev/3058638beebb0b05/38fe39d69bb93911

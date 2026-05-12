@@ -17,6 +17,7 @@ type stackCfg struct {
 	platformManagedBy        string
 	platformSource           string
 	clusters                 []composites.ClusterConfig
+	serviceConnectNamespaces []string
 	vpcID                    string
 	notifications            composites.NotificationsConfig
 }
@@ -50,6 +51,8 @@ func loadConfig(ctx *pulumi.Context) (*stackCfg, error) {
 		if err := clusterCfg.GetObject("clusters", &sCfg.clusters); err != nil {
 			return nil, fmt.Errorf("cluster:clusters config is required for env stacks: %w", err)
 		}
+		// Optional: list of service connect namespace names to provision.
+		_ = clusterCfg.GetObject("serviceConnect", &sCfg.serviceConnectNamespaces)
 		networkCfg := config.New(ctx, "network")
 		sCfg.vpcID = networkCfg.Get("vpcId")
 

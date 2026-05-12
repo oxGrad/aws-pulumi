@@ -5,15 +5,13 @@ import (
 
 	"github.com/pulumi/pulumi-aws/sdk/v7/go/aws/cloudwatch"
 	"github.com/pulumi/pulumi-aws/sdk/v7/go/aws/ecs"
-	"github.com/pulumi/pulumi-aws/sdk/v7/go/aws/servicediscovery"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
 type ECSCluster struct {
 	pulumi.ResourceState
-	ClusterName              pulumi.StringOutput
-	ClusterARN               pulumi.StringOutput
-	ServiceConnectNamespace  pulumi.StringOutput
+	ClusterName pulumi.StringOutput
+	ClusterARN  pulumi.StringOutput
 }
 
 type CapacityProviderStrategy struct {
@@ -25,7 +23,6 @@ type CapacityProviderStrategy struct {
 type ECSClusterArgs struct {
 	ClusterName                pulumi.StringInput
 	CapacityProviderStrategies []CapacityProviderStrategy
-	ServiceConnectNamespace    string // e.g. "dev.internal", "stag.internal", "internal"
 }
 
 func NewECSCluster(ctx *pulumi.Context, name string, args *ECSClusterArgs, opts ...pulumi.ResourceOption) (*ECSCluster, error) {
@@ -43,7 +40,7 @@ func NewECSCluster(ctx *pulumi.Context, name string, args *ECSClusterArgs, opts 
 		return nil, fmt.Errorf("error creating exec command log group: %w", err)
 	}
 
-	clusterArgs := &ecs.ClusterArgs{
+	cluster, err := ecs.NewCluster(ctx, name, &ecs.ClusterArgs{
 		Name: args.ClusterName,
 		Settings: ecs.ClusterSettingArray{
 			&ecs.ClusterSettingArgs{
@@ -63,22 +60,7 @@ func NewECSCluster(ctx *pulumi.Context, name string, args *ECSClusterArgs, opts 
 		Tags: pulumi.StringMap{
 			"Name": args.ClusterName,
 		},
-	}
-
-	if args.ServiceConnectNamespace != "" {
-		ns, err := servicediscovery.NewHttpNamespace(ctx, fmt.Sprintf("%s-sc-namespace", name), &servicediscovery.HttpNamespaceArgs{
-			Name: pulumi.String(args.ServiceConnectNamespace),
-		}, pulumi.Parent(self))
-		if err != nil {
-			return nil, fmt.Errorf("error creating service connect namespace: %w", err)
-		}
-		clusterArgs.ServiceConnectDefaults = &ecs.ClusterServiceConnectDefaultsArgs{
-			Namespace: ns.Arn,
-		}
-		self.ServiceConnectNamespace = ns.Arn
-	}
-
-	cluster, err := ecs.NewCluster(ctx, name, clusterArgs, pulumi.Parent(self))
+	}, pulumi.Parent(self))
 	if err != nil {
 		return nil, fmt.Errorf("error creating ECS cluster: %w", err)
 	}
@@ -118,14 +100,10 @@ func NewECSCluster(ctx *pulumi.Context, name string, args *ECSClusterArgs, opts 
 	self.ClusterName = cluster.Name
 	self.ClusterARN = cluster.Arn
 
-	outputs := pulumi.Map{
+	_ = ctx.RegisterResourceOutputs(self, pulumi.Map{
 		"ClusterName": self.ClusterName,
 		"ClusterARN":  self.ClusterARN,
-	}
-	if args.ServiceConnectNamespace != "" {
-		outputs["ServiceConnectNamespace"] = self.ServiceConnectNamespace
-	}
-	_ = ctx.RegisterResourceOutputs(self, outputs)
+	})
 
 	return self, nil
 }

@@ -119,7 +119,7 @@ func ProvisionECS(ctx *pulumi.Context, args ProvisionECSArgs, provider *aws.Prov
 		result.Clusters[cluster.Name] = make(map[string]*ProvisionedService)
 
 		for _, svc := range cluster.Services {
-			resourceName := fmt.Sprintf("bc-%s-%s-%s", cluster.Name, svc.Name, ctx.Stack())
+			resourceName := fmt.Sprintf("bc-%s-%s-%s", cluster.Name, svc.Name, ctx.Stack()) // TODO: need to shortened resourceName due to 32 char limit
 
 			if svc.Name == "" {
 				return nil, fmt.Errorf("cluster %q has a service with an empty name", cluster.Name)

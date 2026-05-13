@@ -63,6 +63,16 @@ config:
         #   stripPathPrefix: true
         #   priority: 1012
         #   port: 8080
+        - name: managebooking
+          public: true
+          hosts:
+            - devapiaws.bookcabin.com
+          paths:
+            - /managebooking/*
+          HealthCheckPath: /index.html
+          stripPathPrefix: true # TODO: check this
+          priority: 1012
+          port: 8080
         - name: pkfare-flight
           public: true
           hosts:

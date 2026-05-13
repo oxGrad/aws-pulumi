@@ -69,7 +69,7 @@ config:
             - devapiaws.bookcabin.com
           paths:
             - /managebooking/*
-          HealthCheckPath: /index.html
+          HealthCheckPath: /ping
           stripPathPrefix: false # TODO: check this
           priority: 1012
           port: 8080

@@ -70,7 +70,7 @@ config:
           paths:
             - /managebooking/*
           HealthCheckPath: /index.html
-          stripPathPrefix: true # TODO: check this
+          stripPathPrefix: false # TODO: check this
           priority: 1012
           port: 8080
         - name: pkfare-flight

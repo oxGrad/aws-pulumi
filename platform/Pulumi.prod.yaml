@@ -3,12 +3,63 @@ config:
   aws:region: ap-southeast-1
   network:vpcId: vpc-04b31b9fabf5f0eec
   cluster:clusters:
-    - name: frontend
-      listenerARN: PLACEHOLDER_LISTENER_ARN
+    # - name: frontend
+    #   publicListenerARN:
+    #   privateListenerARN:
+    #   capacityProviderStrategies:
+    #     - capacityProvider: FARGATE
+    #       weight: 1
+    #       base: 1
+    #     - capacityProvider: FARGATE_SPOT
+    #       weight: 0
+    #       base: 0
+    # services:
+    #   - name: esimtools
+    #     public: true
+    #     hosts:
+    #       - esimtools.bookcabin.com
+    #     paths:
+    #       - /*
+    #     priority: 1020
+    #     port: 3000
+    - name: backend
+      publicListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-public-prd-ibe-02/99edaa019a96d4fa/dcfcc58fe051ea84 # alb-public-prd-ibe-02
+      privateListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-private-prd-ibe-02/6b0498e616ae28a1/a180f7d97dc83f42 # alb-private-prd-ibe-02
+      capacityProviderStrategies:
+        - capacityProvider: FARGATE
+          weight: 1
+          base: 1
+        - capacityProvider: FARGATE_SPOT
+          weight: 0
+          base: 0
       services:
-        - name: web
+        - name: gobc-sandbox
+          public: true
           hosts:
-            - web.example.com
+            - apiaws.bookcabin.com
           paths:
-            - /*
-          priority: 100
+            - /gobc-sandbox/*
+          HealthCheckPath: /api/ping
+          stripPathPrefix: true
+          priority: 1021
+          port: 8080
+        # - name: pkfare-flight
+        #   public: true
+        #   hosts:
+        #     - apiaws.bookcabin.com
+        #   paths:
+        #     - /pkfare-flight/*
+        #   HealthCheckPath: /api/Search/HealthCheck
+        #   stripPathPrefix: true
+        #   priority: 1022
+        #   port: 8080
+        # - name: cithotel-search
+        #   public: false
+        #   hosts:
+        #     - cithotel-search.internal.bookcabin.com
+        #   paths:
+        #     - /*
+        #   HealthCheckPath: /index.html
+        #   stripPathPrefix: false
+        #   priority: 104
+        #   port: 8080

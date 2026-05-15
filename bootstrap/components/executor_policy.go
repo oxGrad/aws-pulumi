@@ -174,6 +174,7 @@ func NewExecutorPolicy(ctx *pulumi.Context, name string, args *ExecutorPolicyArg
 						"ecr:SetRepositoryPolicy",
 						"ecr:PutImageTagMutability",
 						"ecr:PutImageScanningConfiguration",
+						"ecr:DescribeImages",
 						"ecr:TagResource",
 						"ecr:UntagResource",
 						"ecr:ListTagsForResource",

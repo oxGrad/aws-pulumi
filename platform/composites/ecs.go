@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/pulumi/pulumi-aws/sdk/v7/go/aws"
+	"github.com/pulumi/pulumi-aws/sdk/v7/go/aws/ecr"
 	"github.com/pulumi/pulumi-aws/sdk/v7/go/aws/servicediscovery"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
@@ -82,7 +83,8 @@ func ProvisionECS(ctx *pulumi.Context, args ProvisionECSArgs, provider *aws.Prov
 		return nil, fmt.Errorf("error creating ECR provider: %w", err)
 	}
 
-	// ECR repositories — one per unique service name across all clusters
+	// ECR repositories — one per unique service name across all clusters.
+	// Repos are created in dev and looked up in all other stacks.
 	provisionedECR := map[string]bool{}
 	for _, cluster := range args.Clusters {
 		for _, svc := range cluster.Services {
@@ -91,14 +93,25 @@ func ProvisionECS(ctx *pulumi.Context, args ProvisionECSArgs, provider *aws.Prov
 			}
 			provisionedECR[svc.Name] = true
 
-			repo, err := components.NewECRRepository(ctx, svc.Name, &components.ECRRepositoryArgs{
-				Name: pulumi.String(svc.Name),
-			}, pulumi.Provider(envAgnosticProvider))
-			if err != nil {
-				return nil, err
+			if ctx.Stack() == "dev" {
+				repo, err := components.NewECRRepository(ctx, svc.Name, &components.ECRRepositoryArgs{
+					Name: pulumi.String(svc.Name),
+				}, pulumi.Provider(envAgnosticProvider))
+				if err != nil {
+					return nil, err
+				}
+				ctx.Export(fmt.Sprintf("%s.ecrURL", svc.Name), repo.URL)
+				ctx.Export(fmt.Sprintf("%s.ecrARN", svc.Name), repo.ARN)
+			} else {
+				repo, err := ecr.LookupRepository(ctx, &ecr.LookupRepositoryArgs{
+					Name: svc.Name,
+				}, pulumi.Provider(envAgnosticProvider))
+				if err != nil {
+					return nil, fmt.Errorf("error looking up ECR repository %q: %w", svc.Name, err)
+				}
+				ctx.Export(fmt.Sprintf("%s.ecrURL", svc.Name), pulumi.String(repo.RepositoryUrl))
+				ctx.Export(fmt.Sprintf("%s.ecrARN", svc.Name), pulumi.String(repo.Arn))
 			}
-			ctx.Export(fmt.Sprintf("%s.ecrURL", svc.Name), repo.URL)
-			ctx.Export(fmt.Sprintf("%s.ecrARN", svc.Name), repo.ARN)
 		}
 	}
 

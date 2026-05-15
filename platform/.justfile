@@ -21,6 +21,9 @@ preview-ci-shared:
 preview-ci-dev:
   PULUMI_CONFIG_PASSPHRASE=$PULUMI_CONFIG_PASSPHRASE_DEV just _preview-ci dev
 
+preview-ci-prod:
+  PULUMI_CONFIG_PASSPHRASE=$PULUMI_CONFIG_PASSPHRASE_PROD just _preview-ci prod
+
 refresh-ci-dev:
   PULUMI_CONFIG_PASSPHRASE=$PULUMI_CONFIG_PASSPHRASE_DEV just _refresh-ci dev
 

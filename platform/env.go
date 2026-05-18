@@ -21,6 +21,7 @@ func env(ctx *pulumi.Context, cfg *stackCfg, provider *aws.Provider) error {
 		ManagedBy:      cfg.platformManagedBy,
 		PlatformSource: cfg.platformSource,
 		AWSRegion:      awsCfg.Get("region"),
+		AccountID:      cfg.identity.AccountId,
 	}, provider)
 	if err != nil {
 		return err

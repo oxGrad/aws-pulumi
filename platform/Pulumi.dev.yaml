@@ -61,7 +61,7 @@ config:
         #     - /gobc-travel/*
         #   HealthCheckPath: /health
         #   stripPathPrefix: true
-        #   priority: 1012
+        #   priority: 1007
         #   port: 8080
         - name: managebooking
           public: true
@@ -83,6 +83,8 @@ config:
           stripPathPrefix: true
           priority: 1022
           port: 8080
+          s3Buckets:
+            - pkfare-flight-dev
         - name: cithotel-search
           public: false
           hosts:

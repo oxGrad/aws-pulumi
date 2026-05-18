@@ -22,6 +22,7 @@ type ServiceConfig struct {
 	HealthCheckPath     string                   `json:"healthCheckPath"`
 	HealthCheckInterval int                      `json:"healthCheckInterval"`
 	Monitoring          *ServiceMonitoringConfig `json:"monitoring,omitempty"`
+	S3Buckets           []string                 `json:"s3Buckets,omitempty"`
 }
 
 type ClusterConfig struct {
@@ -38,6 +39,7 @@ type ProvisionECSArgs struct {
 	ManagedBy      string
 	PlatformSource string
 	AWSRegion      string
+	AccountID      string
 }
 
 // ProvisionServiceConnect creates HTTP namespaces for service connect and exports their ARNs.
@@ -112,6 +114,30 @@ func ProvisionECS(ctx *pulumi.Context, args ProvisionECSArgs, provider *aws.Prov
 				ctx.Export(fmt.Sprintf("%s.ecrURL", svc.Name), pulumi.String(repo.RepositoryUrl))
 				ctx.Export(fmt.Sprintf("%s.ecrARN", svc.Name), pulumi.String(repo.Arn))
 			}
+		}
+	}
+
+	// IAM roles — one execution + task role pair per unique service name.
+	provisionedRoles := map[string]bool{}
+	for _, cluster := range args.Clusters {
+		for _, svc := range cluster.Services {
+			if svc.Name == "" || provisionedRoles[svc.Name] {
+				continue
+			}
+			provisionedRoles[svc.Name] = true
+
+			roles, err := components.NewECSRoles(ctx, fmt.Sprintf("%s-%s-roles", svc.Name, ctx.Stack()), &components.ECSRolesArgs{
+				ServiceName: svc.Name,
+				Stack:       ctx.Stack(),
+				AccountID:   args.AccountID,
+				Region:      args.AWSRegion,
+				S3Buckets:   svc.S3Buckets,
+			}, pulumi.Provider(provider))
+			if err != nil {
+				return nil, err
+			}
+			ctx.Export(fmt.Sprintf("%s.executionRoleARN", svc.Name), roles.ExecutionRoleARN)
+			ctx.Export(fmt.Sprintf("%s.taskRoleARN", svc.Name), roles.TaskRoleARN)
 		}
 	}
 

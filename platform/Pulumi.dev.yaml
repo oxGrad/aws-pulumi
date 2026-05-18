@@ -84,7 +84,7 @@ config:
           priority: 1022
           port: 8080
           s3Buckets:
-            - pkfare-flight-dev
+            - st-ibe-pkfareflight-dev-apse1-01
         - name: cithotel-search
           public: false
           hosts:

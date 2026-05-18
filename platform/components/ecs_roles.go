@@ -42,8 +42,8 @@ func NewECSRoles(ctx *pulumi.Context, name string, args *ECSRolesArgs, opts ...p
 
 	// --- Execution Role ---
 	execRole, err := iam.NewRole(ctx, fmt.Sprintf("%s-exec", name), &iam.RoleArgs{
-		Name:             pulumi.String(args.ServiceName),
-		Path:             pulumi.Sprintf("/ecs/execution/%s/", args.Stack),
+		Name:             pulumi.Sprintf("%s-%s-execution", args.ServiceName, args.Stack),
+		Path:             pulumi.String("/ecs/"),
 		AssumeRolePolicy: pulumi.String(string(assumeRolePolicy)),
 		Tags:             pulumi.StringMap{"Service": pulumi.String(args.ServiceName)},
 	}, pulumi.Parent(self))
@@ -90,8 +90,8 @@ func NewECSRoles(ctx *pulumi.Context, name string, args *ECSRolesArgs, opts ...p
 
 	// --- Task Role ---
 	taskRole, err := iam.NewRole(ctx, fmt.Sprintf("%s-task", name), &iam.RoleArgs{
-		Name:             pulumi.String(args.ServiceName),
-		Path:             pulumi.Sprintf("/ecs/task/%s/", args.Stack),
+		Name:             pulumi.Sprintf("%s-%s-task", args.ServiceName, args.Stack),
+		Path:             pulumi.String("/ecs/"),
 		AssumeRolePolicy: pulumi.String(string(assumeRolePolicy)),
 		Tags:             pulumi.StringMap{"Service": pulumi.String(args.ServiceName)},
 	}, pulumi.Parent(self))

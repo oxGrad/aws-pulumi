@@ -34,7 +34,7 @@ stages:
         displayName: Preview changes
         pool:
           vmImage: ubuntu-latest
-        container: pulumi/pulumi-go:3.237.0
+        container: pulumi/pulumi-go:3.239.0
         steps:
           - checkout: self
 
@@ -104,8 +104,8 @@ stages:
         displayName: Apply changes
         pool:
           vmImage: ubuntu-latest
-        container: pulumi/pulumi-go:3.237.0
-        environment: pulumi-apply # TODO: Create environment in Azure DevOps
+        container: pulumi/pulumi-go:3.239.0
+        environment: pulumi-apply
         strategy:
           runOnce:
             deploy:

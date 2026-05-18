@@ -220,6 +220,27 @@ func NewExecutorPolicy(ctx *pulumi.Context, name string, args *ExecutorPolicyArg
 					"Resource": "*",
 				},
 				{
+					"Sid":    "IAMRoleManagement",
+					"Effect": "Allow",
+					"Action": []string{
+						"iam:CreateRole",
+						"iam:DeleteRole",
+						"iam:GetRole",
+						"iam:TagRole",
+						"iam:UntagRole",
+						"iam:UpdateAssumeRolePolicy",
+						"iam:AttachRolePolicy",
+						"iam:DetachRolePolicy",
+						"iam:ListAttachedRolePolicies",
+						"iam:PutRolePolicy",
+						"iam:DeleteRolePolicy",
+						"iam:GetRolePolicy",
+						"iam:ListRolePolicies",
+						"iam:PassRole",
+					},
+					"Resource": "*",
+				},
+				{
 					"Sid":    "SecretsManagerAccess",
 					"Effect": "Allow",
 					"Action": []string{

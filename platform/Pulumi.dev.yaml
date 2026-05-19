@@ -95,3 +95,5 @@ config:
           stripPathPrefix: false
           priority: 104
           port: 8080
+          s3Buckets:
+            - st-ibe-agoda-hotel-dev-apse1-01

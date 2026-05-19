@@ -237,6 +237,7 @@ func NewExecutorPolicy(ctx *pulumi.Context, name string, args *ExecutorPolicyArg
 						"iam:GetRolePolicy",
 						"iam:ListRolePolicies",
 						"iam:PassRole",
+						"iam:ListInstanceProfilesForRole",
 					},
 					"Resource": "*",
 				},

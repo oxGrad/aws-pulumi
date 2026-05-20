@@ -133,7 +133,8 @@ func ProvisionECS(ctx *pulumi.Context, args ProvisionECSArgs, provider *aws.Prov
 	provisionedRoles := map[string]bool{}
 	for _, cluster := range args.Clusters {
 		for _, svc := range cluster.Services {
-			if svc.Name == "" || provisionedRoles[svc.Name] {
+			// NOTE: Skip task and execution roles creation for "frontend" cluster
+			if cluster.Name == "frontend" || svc.Name == "" || provisionedRoles[svc.Name] {
 				continue
 			}
 			provisionedRoles[svc.Name] = true

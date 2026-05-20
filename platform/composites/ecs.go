@@ -86,15 +86,15 @@ func ProvisionECS(ctx *pulumi.Context, args ProvisionECSArgs, provider *aws.Prov
 	}
 
 	// Build cache ECR repository — dev only, uses env-agnostic provider (no Environment tag).
-	if ctx.Stack() == "dev" {
-		cacheRepo, err := components.NewBuildCacheECRRepository(ctx, "build-cache", &components.BuildCacheECRRepositoryArgs{
-			Name: pulumi.String("build-cache"),
-		}, pulumi.Provider(envAgnosticProvider))
-		if err != nil {
-			return nil, err
-		}
-		ctx.Export("buildCacheECRURL", cacheRepo.URL)
-	}
+	// if ctx.Stack() == "dev" {
+	// 	cacheRepo, err := components.NewBuildCacheECRRepository(ctx, "build-cache", &components.BuildCacheECRRepositoryArgs{
+	// 		Name: pulumi.String("build-cache"),
+	// 	}, pulumi.Provider(envAgnosticProvider))
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	ctx.Export("buildCacheECRURL", cacheRepo.URL)
+	// }
 
 	// ECR repositories — one per unique service name across all clusters.
 	// Repos are created in dev and looked up in all other stacks.

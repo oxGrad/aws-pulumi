@@ -6,6 +6,7 @@ config:
     - dev.internal
   cluster:clusters:
     - name: frontend
+      shortName: fe
       publicListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-public-dev/3058638beebb0b05/38fe39d69bb93911
       privateListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-private-dev/881aa8428c606707/539f0089fb48f000
       capacityProviderStrategies:
@@ -33,6 +34,7 @@ config:
           priority: 800
           port: 3000
     - name: backend
+      shortName: be
       publicListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-public-dev/3058638beebb0b05/38fe39d69bb93911
       privateListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-private-dev/881aa8428c606707/539f0089fb48f000
       capacityProviderStrategies:

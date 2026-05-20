@@ -99,3 +99,4 @@ config:
           port: 8080
           s3Buckets:
             - st-ibe-agoda-hotel-dev-apse1-01
+            - st-ibe-cart-dev-apse1-01

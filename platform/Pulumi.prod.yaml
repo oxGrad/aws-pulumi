@@ -27,7 +27,7 @@ config:
           port: 3000
     - name: backend
       shortName: be
-      publicListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-public-prd-ibe-01/7cd642592ad7e058/bf5451adc14c2f8b # alb-public-prd-ibe-02
+      publicListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-public-prd-ibe-01/7cd642592ad7e058/bf5451adc14c2f8b # alb-public-prd-ibe-01
       privateListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-private-prd-ibe-02/6b0498e616ae28a1/a180f7d97dc83f42 # alb-private-prd-ibe-02
       capacityProviderStrategies:
         - capacityProvider: FARGATE

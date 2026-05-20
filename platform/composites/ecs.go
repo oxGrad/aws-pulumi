@@ -27,6 +27,7 @@ type ServiceConfig struct {
 
 type ClusterConfig struct {
 	Name                       string                                `json:"name"`
+	ShortName                  string                                `json:"shortName,omitempty"`
 	PublicListenerARN          string                                `json:"publicListenerARN"`
 	PrivateListenerARN         string                                `json:"privateListenerARN"`
 	Services                   []ServiceConfig                       `json:"services"`
@@ -168,8 +169,13 @@ func ProvisionECS(ctx *pulumi.Context, args ProvisionECSArgs, provider *aws.Prov
 
 		result.Clusters[cluster.Name] = make(map[string]*ProvisionedService)
 
+		clusterShortName := cluster.ShortName
+		if clusterShortName == "" {
+			clusterShortName = cluster.Name
+		}
+
 		for _, svc := range cluster.Services {
-			resourceName := fmt.Sprintf("bc-%s-%s-%s", cluster.Name, svc.Name, ctx.Stack()) // TODO: need to shortened resourceName due to 32 char limit
+			resourceName := fmt.Sprintf("bc-%s-%s-%s", clusterShortName, svc.Name, ctx.Stack())
 
 			if svc.Name == "" {
 				return nil, fmt.Errorf("cluster %q has a service with an empty name", cluster.Name)

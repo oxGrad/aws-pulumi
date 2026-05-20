@@ -7,8 +7,8 @@ config:
   cluster:clusters:
     - name: frontend
       shortName: fe
-      publicListenerARN:
-      privateListenerARN:
+      publicListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-public-prd-ibe-01/7cd642592ad7e058/bf5451adc14c2f8b
+      privateListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-private-prd-ibe-01/f318ddae9f3ac537/fd79817d6b64c9d6
       capacityProviderStrategies:
         - capacityProvider: FARGATE
           weight: 1

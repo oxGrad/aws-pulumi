@@ -34,7 +34,7 @@ stages:
         displayName: Preview changes
         pool:
           vmImage: ubuntu-latest
-        container: pulumi/pulumi-go:3.237.0
+        container: pulumi/pulumi-go:3.241.0-debian-amd64
         steps:
           - checkout: self
 
@@ -104,7 +104,7 @@ stages:
         displayName: Apply changes
         pool:
           vmImage: ubuntu-latest
-        container: pulumi/pulumi-go:3.237.0
+        container: pulumi/pulumi-go:3.241.0-debian-amd64
         environment: pulumi-apply
         strategy:
           runOnce:

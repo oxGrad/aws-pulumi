@@ -107,6 +107,7 @@ func ProvisionECS(ctx *pulumi.Context, args ProvisionECSArgs, provider *aws.Prov
 			}
 			provisionedECR[svc.Name] = true
 
+			// NOTE: Elastic container registry only created in dev
 			if ctx.Stack() == "dev" {
 				repo, err := components.NewECRRepository(ctx, svc.Name, &components.ECRRepositoryArgs{
 					Name: pulumi.String(svc.Name),

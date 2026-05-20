@@ -19,15 +19,15 @@ config:
       services:
         - name: esimtools
           public: true
-          hosts:
-            - dev-aws.bookcabin.com
-          paths:
-            - /esim/voucher/*
-          stripPathPrefix: true
           # hosts:
-          #   - dev-esimtools.bookcabin.com
+          #   - dev-aws.bookcabin.com
           # paths:
-          #   - /*
+          #   - /esim/voucher/*
+          # stripPathPrefix: true
+          hosts:
+            - dev-esimtools.bookcabin.com
+          paths:
+            - /*
           priority: 1020
           port: 3000
         - name: ota-bc-ui

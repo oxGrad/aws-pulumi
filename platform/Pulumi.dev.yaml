@@ -20,9 +20,14 @@ config:
         - name: esimtools
           public: true
           hosts:
-            - dev-esimtools.bookcabin.com
+            - dev-aws.bookcabin.com
           paths:
-            - /*
+            - /esim/voucher/*
+          stripPathPrefix: true
+          # hosts:
+          #   - dev-esimtools.bookcabin.com
+          # paths:
+          #   - /*
           priority: 1020
           port: 3000
         - name: ota-bc-ui
@@ -99,4 +104,3 @@ config:
           port: 8080
           s3Buckets:
             - st-ibe-agoda-hotel-dev-apse1-01
-            - st-ibe-cart-dev-apse1-01

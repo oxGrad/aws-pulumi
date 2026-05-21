@@ -255,6 +255,27 @@ func NewExecutorPolicy(ctx *pulumi.Context, name string, args *ExecutorPolicyArg
 					},
 					"Resource": "*",
 				},
+				{
+					"Sid":    "LambdaManagement",
+					"Effect": "Allow",
+					"Action": []string{
+						"lambda:CreateFunction",
+						"lambda:DeleteFunction",
+						"lambda:GetFunction",
+						"lambda:GetFunctionConfiguration",
+						"lambda:UpdateFunctionCode",
+						"lambda:UpdateFunctionConfiguration",
+						"lambda:AddPermission",
+						"lambda:RemovePermission",
+						"lambda:GetPolicy",
+						"lambda:TagResource",
+						"lambda:UntagResource",
+						"lambda:ListTags",
+						"lambda:ListVersionsByFunction",
+						"lambda:GetFunctionCodeSigningConfig",
+					},
+					"Resource": "*",
+				},
 			},
 		}
 		jsonBytes, err := json.Marshal(doc)

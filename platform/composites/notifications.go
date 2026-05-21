@@ -15,11 +15,19 @@ type NotificationEndpoint struct {
 	Endpoint string `json:"endpoint"`
 }
 
+// TeamsConfig holds Incoming Webhook URLs for Microsoft Teams notifications.
+// Each URL routes to a separate Teams channel. Both are optional.
+type TeamsConfig struct {
+	CriticalWebhookURL string `json:"criticalWebhookURL,omitempty"`
+	WarningWebhookURL  string `json:"warningWebhookURL,omitempty"`
+}
+
 // NotificationsConfig is YAML-configurable and lives at the stack level.
 // Two topics are created per environment: critical (page immediately) and warning (Slack/email).
 type NotificationsConfig struct {
 	Critical []NotificationEndpoint `json:"critical"`
 	Warning  []NotificationEndpoint `json:"warning"`
+	Teams    *TeamsConfig           `json:"teams,omitempty"`
 }
 
 // ProvisionedNotifications exposes the two env-level SNS topic ARNs.
@@ -27,6 +35,8 @@ type ProvisionedNotifications struct {
 	CriticalTopicARN pulumi.StringOutput
 	WarningTopicARN  pulumi.StringOutput
 }
+
+const teamsNotifierZipPath = "lambda/teams-notifier/handler.zip"
 
 func ProvisionNotifications(ctx *pulumi.Context, args NotificationsConfig, provider *aws.Provider) (*ProvisionedNotifications, error) {
 	stack := ctx.Stack()
@@ -47,6 +57,34 @@ func ProvisionNotifications(ctx *pulumi.Context, args NotificationsConfig, provi
 	}, pulumi.Provider(provider))
 	if err != nil {
 		return nil, err
+	}
+
+	if args.Teams != nil {
+		if args.Teams.CriticalWebhookURL != "" {
+			notifierName := fmt.Sprintf("bc-%s-teams-critical", stack)
+			_, err = components.NewTeamsNotifier(ctx, notifierName, &components.TeamsNotifierArgs{
+				Name:       notifierName,
+				TopicARN:   critical.ARN,
+				WebhookURL: pulumi.String(args.Teams.CriticalWebhookURL),
+				ZipPath:    teamsNotifierZipPath,
+			}, pulumi.Provider(provider))
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if args.Teams.WarningWebhookURL != "" {
+			notifierName := fmt.Sprintf("bc-%s-teams-warning", stack)
+			_, err = components.NewTeamsNotifier(ctx, notifierName, &components.TeamsNotifierArgs{
+				Name:       notifierName,
+				TopicARN:   warning.ARN,
+				WebhookURL: pulumi.String(args.Teams.WarningWebhookURL),
+				ZipPath:    teamsNotifierZipPath,
+			}, pulumi.Provider(provider))
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	ctx.Export("notifications.criticalTopicARN", critical.ARN)

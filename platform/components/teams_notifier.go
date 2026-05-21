@@ -15,10 +15,14 @@ type TeamsNotifier struct {
 }
 
 type TeamsNotifierArgs struct {
-	Name       string
-	TopicARN   pulumi.StringInput
-	WebhookURL pulumi.StringInput
-	ZipPath    string
+	// Name is the AWS Lambda function name.
+	Name string
+	// CriticalTopicARN and WarningTopicARN are the two SNS topics to subscribe to.
+	CriticalTopicARN pulumi.StringInput
+	WarningTopicARN  pulumi.StringInput
+	// SSMParameterPath is the path to the SecureString SSM parameter containing the webhook JSON map.
+	SSMParameterPath string
+	ZipPath          string
 }
 
 func NewTeamsNotifier(ctx *pulumi.Context, name string, args *TeamsNotifierArgs, opts ...pulumi.ResourceOption) (*TeamsNotifier, error) {
@@ -57,6 +61,28 @@ func NewTeamsNotifier(ctx *pulumi.Context, name string, args *TeamsNotifierArgs,
 		return nil, err
 	}
 
+	ssmPolicyDoc, err := json.Marshal(map[string]any{
+		"Version": "2012-10-17",
+		"Statement": []map[string]any{
+			{
+				"Effect":   "Allow",
+				"Action":   "ssm:GetParameter",
+				"Resource": fmt.Sprintf("arn:aws:ssm:*:*:parameter%s", args.SSMParameterPath),
+			},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = iam.NewRolePolicy(ctx, fmt.Sprintf("%s-ssm-policy", name), &iam.RolePolicyArgs{
+		Role:   role.Name,
+		Policy: pulumi.String(string(ssmPolicyDoc)),
+	}, pulumi.Parent(self))
+	if err != nil {
+		return nil, err
+	}
+
 	fn, err := lambda.NewFunction(ctx, name, &lambda.FunctionArgs{
 		Name:    pulumi.String(args.Name),
 		Runtime: pulumi.String("provided.al2023"),
@@ -65,7 +91,9 @@ func NewTeamsNotifier(ctx *pulumi.Context, name string, args *TeamsNotifierArgs,
 		Code:    pulumi.NewFileArchive(args.ZipPath),
 		Environment: &lambda.FunctionEnvironmentArgs{
 			Variables: pulumi.StringMap{
-				"TEAMS_WEBHOOK_URL": args.WebhookURL,
+				"SSM_PARAMETER_PATH": pulumi.String(args.SSMParameterPath),
+				"CRITICAL_TOPIC_ARN": args.CriticalTopicARN,
+				"WARNING_TOPIC_ARN":  args.WarningTopicARN,
 			},
 		},
 	}, pulumi.Parent(self))
@@ -73,23 +101,31 @@ func NewTeamsNotifier(ctx *pulumi.Context, name string, args *TeamsNotifierArgs,
 		return nil, err
 	}
 
-	_, err = lambda.NewPermission(ctx, fmt.Sprintf("%s-sns-invoke", name), &lambda.PermissionArgs{
-		Action:    pulumi.String("lambda:InvokeFunction"),
-		Function:  fn.Name,
-		Principal: pulumi.String("sns.amazonaws.com"),
-		SourceArn: args.TopicARN,
-	}, pulumi.Parent(self))
-	if err != nil {
-		return nil, err
-	}
+	for _, topic := range []struct {
+		suffix string
+		arn    pulumi.StringInput
+	}{
+		{"critical", args.CriticalTopicARN},
+		{"warning", args.WarningTopicARN},
+	} {
+		_, err = lambda.NewPermission(ctx, fmt.Sprintf("%s-sns-invoke-%s", name, topic.suffix), &lambda.PermissionArgs{
+			Action:    pulumi.String("lambda:InvokeFunction"),
+			Function:  fn.Name,
+			Principal: pulumi.String("sns.amazonaws.com"),
+			SourceArn: topic.arn,
+		}, pulumi.Parent(self))
+		if err != nil {
+			return nil, err
+		}
 
-	_, err = sns.NewTopicSubscription(ctx, fmt.Sprintf("%s-sub", name), &sns.TopicSubscriptionArgs{
-		Topic:    args.TopicARN,
-		Protocol: pulumi.String("lambda"),
-		Endpoint: fn.Arn,
-	}, pulumi.Parent(self))
-	if err != nil {
-		return nil, err
+		_, err = sns.NewTopicSubscription(ctx, fmt.Sprintf("%s-sub-%s", name, topic.suffix), &sns.TopicSubscriptionArgs{
+			Topic:    topic.arn,
+			Protocol: pulumi.String("lambda"),
+			Endpoint: fn.Arn,
+		}, pulumi.Parent(self))
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	_ = ctx.RegisterResourceOutputs(self, pulumi.Map{})

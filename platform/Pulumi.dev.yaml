@@ -113,5 +113,4 @@ config:
             - st-ibe-agoda-hotel-dev-apse1-01
   notifications:endpoints:
     teams:
-      warningWebhookURL: https://bookcabincom.webhook.office.com/webhookb2/234dfd94-2068-4f9d-b218-45db909f868b@3f827832-72f3-4d92-9f5e-636dc7b383c1/IncomingWebhook/41abfba34cd546f58f52f3a784df4a9c/5e553233-bfb4-453e-93a5-ff7f51badef1/V2k5_9h_s3B4DHojz4mLRHBnIWSbKZ4CYHgXeKPZvWA241
-      criticalWebhookURL: https://bookcabincom.webhook.office.com/webhookb2/234dfd94-2068-4f9d-b218-45db909f868b@3f827832-72f3-4d92-9f5e-636dc7b383c1/IncomingWebhook/17e3f11190384262aa683e7d565bd2fc/5e553233-bfb4-453e-93a5-ff7f51badef1/V2lFzOFYepn8PRlYa8GLbkxglFuV3Yk17rFem7cJkuICw1
+      enabled: true

@@ -15,11 +15,11 @@ type NotificationEndpoint struct {
 	Endpoint string `json:"endpoint"`
 }
 
-// TeamsConfig holds Incoming Webhook URLs for Microsoft Teams notifications.
-// Each URL routes to a separate Teams channel. Both are optional.
+// TeamsConfig enables the Teams notifier Lambda for this environment.
+// Webhook URLs are not stored here — they live in SSM at /bc/{stack}/teams-notifier
+// as a JSON map: {"service-name": {"critical": "https://...", "warning": "https://..."}}
 type TeamsConfig struct {
-	CriticalWebhookURL string `json:"criticalWebhookURL,omitempty"`
-	WarningWebhookURL  string `json:"warningWebhookURL,omitempty"`
+	Enabled bool `json:"enabled"`
 }
 
 // NotificationsConfig is YAML-configurable and lives at the stack level.
@@ -59,31 +59,18 @@ func ProvisionNotifications(ctx *pulumi.Context, args NotificationsConfig, provi
 		return nil, err
 	}
 
-	if args.Teams != nil {
-		if args.Teams.CriticalWebhookURL != "" {
-			notifierName := fmt.Sprintf("bc-%s-teams-critical", stack)
-			_, err = components.NewTeamsNotifier(ctx, notifierName, &components.TeamsNotifierArgs{
-				Name:       notifierName,
-				TopicARN:   critical.ARN,
-				WebhookURL: pulumi.String(args.Teams.CriticalWebhookURL),
-				ZipPath:    teamsNotifierZipPath,
-			}, pulumi.Provider(provider))
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		if args.Teams.WarningWebhookURL != "" {
-			notifierName := fmt.Sprintf("bc-%s-teams-warning", stack)
-			_, err = components.NewTeamsNotifier(ctx, notifierName, &components.TeamsNotifierArgs{
-				Name:       notifierName,
-				TopicARN:   warning.ARN,
-				WebhookURL: pulumi.String(args.Teams.WarningWebhookURL),
-				ZipPath:    teamsNotifierZipPath,
-			}, pulumi.Provider(provider))
-			if err != nil {
-				return nil, err
-			}
+	if args.Teams != nil && args.Teams.Enabled {
+		notifierName := fmt.Sprintf("bc-%s-teams-notifier", stack)
+		ssmPath := fmt.Sprintf("/bc/%s/teams-notifier", stack)
+		_, err = components.NewTeamsNotifier(ctx, notifierName, &components.TeamsNotifierArgs{
+			Name:             notifierName,
+			CriticalTopicARN: critical.ARN,
+			WarningTopicARN:  warning.ARN,
+			SSMParameterPath: ssmPath,
+			ZipPath:          teamsNotifierZipPath,
+		}, pulumi.Provider(provider))
+		if err != nil {
+			return nil, err
 		}
 	}
 

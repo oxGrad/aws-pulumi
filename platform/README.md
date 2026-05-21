@@ -4,7 +4,7 @@ This Pulumi project manages the ECS clusters, ALB listener rules, and target gro
 
 ## What This Project Manages
 
-- **ECS Clusters** — `bc-frontend-cluster` (Node.js apps) and `bc-backend-cluster` (Go/.NET apps)
+- **ECS Clusters** — `bc-frontend-cluster` (Next.js and React.js apps) and `bc-backend-cluster` (Go/.NET apps)
 - **ALB Target Groups** — one per service per environment (dev/prod), used by the pipeline
 - **ALB Listener Rules** — routes traffic from the ALB to each service's target group
 - **Service Connect Namespaces** — `dev.internal` and `prod.internal` for inter-service communication
@@ -12,10 +12,10 @@ This Pulumi project manages the ECS clusters, ALB listener rules, and target gro
 
 ## Stacks
 
-| Stack | Config File | Environment |
-|-------|-------------|-------------|
-| `dev` | `Pulumi.dev.yaml` | Development |
-| `prod` | `Pulumi.prod.yaml` | Production |
+| Stack    | Config File          | Environment             |
+| -------- | -------------------- | ----------------------- |
+| `dev`    | `Pulumi.dev.yaml`    | Development             |
+| `prod`   | `Pulumi.prod.yaml`   | Production              |
 | `shared` | `Pulumi.shared.yaml` | Shared IAM/CI resources |
 
 ---
@@ -28,10 +28,10 @@ Follow these steps whenever a new service needs to be deployed to ECS.
 
 Choose the cluster based on the service's runtime:
 
-| Cluster | `name` in YAML | Services |
-|---------|---------------|---------|
-| `bc-backend-cluster` | `backend` | Go, .NET (port 8080 typically) |
-| `bc-frontend-cluster` | `frontend` | Node.js (port 3000 typically) |
+| Cluster               | `name` in YAML | Services                       |
+| --------------------- | -------------- | ------------------------------ |
+| `bc-backend-cluster`  | `backend`      | Go, .NET (port 8080 typically) |
+| `bc-frontend-cluster` | `frontend`     | Node.js (port 3000 typically)  |
 
 ### Step 2: Add the Service to `Pulumi.dev.yaml`
 
@@ -45,16 +45,16 @@ cluster:clusters:
     # ... existing fields ...
     services:
       # ... existing services ...
-      - name: my-new-service        # lowercase, hyphenated, matches ECR repo name
-        public: true                 # true = public ALB, false = private ALB
+      - name: my-new-service # lowercase, hyphenated, matches ECR repo name
+        public: true # true = public ALB, false = private ALB
         hosts:
-          - devapiaws.bookcabin.com  # ALB hostname (use existing host for path-based routing)
+          - devapiaws.bookcabin.com # ALB hostname (use existing host for path-based routing)
         paths:
-          - /my-new-service/*        # URL path prefix for this service
-        HealthCheckPath: /health     # ALB health check endpoint (must return 200)
-        stripPathPrefix: true        # strip /my-new-service prefix before forwarding
-        priority: 1030               # ALB rule priority — must be unique across all services
-        port: 8080                   # container port your app listens on
+          - /my-new-service/* # URL path prefix for this service
+        HealthCheckPath: /health # ALB health check endpoint (must return 200)
+        stripPathPrefix: true # strip /my-new-service prefix before forwarding
+        priority: 1030 # ALB rule priority — must be unique across all services
+        port: 8080 # container port your app listens on
 ```
 
 **Example — new frontend service:**
@@ -97,31 +97,16 @@ cluster:clusters:
 
 > **Tip**: Start with `public: false` in prod if the service is not ready for public traffic. Change to `true` when ready.
 
-### Step 4: Run `pulumi up`
+### Step 4: Open a Pull Request
 
-Apply the dev stack first:
+> **Do not run `pulumi up` locally** unless you are SRE or DevOps. Infrastructure changes are applied exclusively through the Azure Pipeline, which requires PR approval before any resources are created or modified.
 
-```bash
-cd infrastructure/gobc-pulumi/platform
+1. Commit your changes to `Pulumi.dev.yaml` and `Pulumi.prod.yaml` on a feature branch
+2. Open a Pull Request targeting `main` (or `master`)
+3. Request review from the SRE/DevOps team
+4. Once approved and merged, the pipeline automatically runs `pulumi up` for the affected stacks
 
-# Preview changes (safe — no changes made)
-pulumi preview --stack dev
-
-# Apply changes
-pulumi up --stack dev
-```
-
-Review the plan output. It should show:
-- A new `aws:alb:TargetGroup` resource for your service
-- A new `aws:alb:ListenerRule` resource for each path/host combination
-
-Confirm with `yes` when prompted.
-
-Then apply prod:
-
-```bash
-pulumi up --stack prod
-```
+The pipeline runs `pulumi preview` on PR (safe, no changes) and `pulumi up` only after merge with approval. Dev is applied first; prod requires a separate approval gate.
 
 ### Step 5: Get the Target Group ARNs
 
@@ -147,6 +132,7 @@ aws elbv2 describe-target-groups \
 ```
 
 The ARN format looks like:
+
 ```
 arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:targetgroup/my-new-service-dev/abc123def456
 ```
@@ -161,8 +147,8 @@ extends:
   parameters:
     variableGroups:
       - azure-ci-deployment
-    targetGroupArnDev: 'arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:targetgroup/my-new-service-dev/abc123def456'
-    targetGroupArnProd: 'arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:targetgroup/my-new-service-prod/def456abc789'
+    targetGroupArnDev: "arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:targetgroup/my-new-service-dev/abc123def456"
+    targetGroupArnProd: "arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:targetgroup/my-new-service-prod/def456abc789"
 ```
 
 See the [cicd-templates deployment guide](../../backend/cicd-templates/docs/usage-guide.md) for the full pipeline setup.
@@ -173,18 +159,18 @@ See the [cicd-templates deployment guide](../../backend/cicd-templates/docs/usag
 
 All fields under `services` in the cluster YAML:
 
-| Field | Required | Type | Description |
-|-------|----------|------|-------------|
-| `name` | Yes | string | Service identifier. Must be lowercase and hyphenated. Must match the ECR repository name and the ECS service name. |
-| `public` | Yes | bool | `true` routes via the public ALB; `false` routes via the private (internal) ALB. |
-| `hosts` | Yes | list | ALB hostnames to match (e.g., `devapiaws.bookcabin.com`). Multiple services share the same hostname and are differentiated by `paths`. |
-| `paths` | Yes | list | URL path patterns to match (e.g., `/my-service/*`). Use `/*` to match all paths when the service owns the entire hostname. |
-| `HealthCheckPath` | No | string | ALB health check URL path. Defaults to `/`. Must return HTTP 200. |
-| `stripPathPrefix` | No | bool | When `true`, strips the first path segment before forwarding to the container (e.g., `/my-service/users` → `/users`). Use `false` when the app handles its own prefix. |
-| `priority` | Yes | int | ALB listener rule priority. **Must be unique** across all services on the same ALB. Lower numbers are evaluated first. Check existing priorities in the YAML before choosing. |
-| `port` | Yes | int | Container port the application listens on. Used for ALB target group health checks and ECS service registration. |
-| `s3Buckets` | No | list | S3 bucket names this service's task role should have read/write access to. Buckets must already exist. |
-| `monitoring` | No | object | CloudWatch monitoring configuration (see below). |
+| Field             | Required | Type   | Description                                                                                                                                                                   |
+| ----------------- | -------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`            | Yes      | string | Service identifier. Must be lowercase and hyphenated. Must match the ECR repository name and the ECS service name.                                                            |
+| `public`          | Yes      | bool   | `true` routes via the public ALB; `false` routes via the private (internal) ALB.                                                                                              |
+| `hosts`           | Yes      | list   | ALB hostnames to match (e.g., `devapiaws.bookcabin.com`). Multiple services share the same hostname and are differentiated by `paths`.                                        |
+| `paths`           | Yes      | list   | URL path patterns to match (e.g., `/my-service/*`). Use `/*` to match all paths when the service owns the entire hostname.                                                    |
+| `HealthCheckPath` | No       | string | ALB health check URL path. Defaults to `/`. Must return HTTP 200.                                                                                                             |
+| `stripPathPrefix` | No       | bool   | When `true`, strips the first path segment before forwarding to the container (e.g., `/my-service/users` → `/users`). Use `false` when the app handles its own prefix.        |
+| `priority`        | Yes      | int    | ALB listener rule priority. **Must be unique** across all services on the same ALB. Lower numbers are evaluated first. Check existing priorities in the YAML before choosing. |
+| `port`            | Yes      | int    | Container port the application listens on. Used for ALB target group health checks and ECS service registration.                                                              |
+| `s3Buckets`       | No       | list   | S3 bucket names this service's task role should have read/write access to. Buckets must already exist.                                                                        |
+| `monitoring`      | No       | object | CloudWatch monitoring configuration (see below).                                                                                                                              |
 
 ### Monitoring Configuration
 
@@ -193,11 +179,11 @@ Optional block under a service entry:
 ```yaml
 monitoring:
   enabled: true
-  logGroupName: /ecs/my-service-dev       # CloudWatch log group to monitor
-  unhandledLogPattern: "ERROR"             # Log pattern to alarm on
-  latencySLASecs: 2.0                      # Alarm when p99 latency exceeds this
-  desiredTaskCount: 1                      # Expected running task count
-  minHealthyHosts: 1                       # Minimum healthy targets in target group
+  logGroupName: /ecs/my-service-dev # CloudWatch log group to monitor
+  unhandledLogPattern: "ERROR" # Log pattern to alarm on
+  latencySLASecs: 2.0 # Alarm when p99 latency exceeds this
+  desiredTaskCount: 1 # Expected running task count
+  minHealthyHosts: 1 # Minimum healthy targets in target group
 ```
 
 ### Priority Selection
@@ -205,6 +191,7 @@ monitoring:
 ALB rules are evaluated in ascending priority order (lowest number = first match). Current priority ranges in use:
 
 **Dev backend ALB:**
+
 - `800` — ota-bc-ui (frontend, broad catch-all)
 - `999` — gobc-travel
 - `1012` — managebooking
@@ -213,6 +200,7 @@ ALB rules are evaluated in ascending priority order (lowest number = first match
 - `1022` — pkfare-flight
 
 **Prod backend ALB:**
+
 - `50` — gobc-travel
 - `1021` — gobc-sandbox
 
@@ -226,35 +214,35 @@ Pick a priority that doesn't conflict with existing rules. For new path-based ba
 
 **Backend cluster** (`bc-backend-cluster-dev`):
 
-| Service | Hosts | Path | Port | Public |
-|---------|-------|------|------|--------|
-| `gobc-sandbox` | devapiaws.bookcabin.com | `/gobc-sandbox/*` | 8080 | Yes |
-| `gobc-travel` | devapiaws.bookcabin.com | `/gobc-travel/*` | 8080 | Yes |
-| `managebooking` | devapiaws.bookcabin.com | `/managebooking/*` | 8080 | Yes |
-| `pkfare-flight` | devapiaws.bookcabin.com | `/pkfare-flight/*` | 8080 | Yes |
-| `cithotel-search` | cithotel-search-dev.internal.bookcabin.com | `/*` | 8080 | No |
+| Service           | Hosts                                      | Path               | Port | Public |
+| ----------------- | ------------------------------------------ | ------------------ | ---- | ------ |
+| `gobc-sandbox`    | devapiaws.bookcabin.com                    | `/gobc-sandbox/*`  | 8080 | Yes    |
+| `gobc-travel`     | devapiaws.bookcabin.com                    | `/gobc-travel/*`   | 8080 | Yes    |
+| `managebooking`   | devapiaws.bookcabin.com                    | `/managebooking/*` | 8080 | Yes    |
+| `pkfare-flight`   | devapiaws.bookcabin.com                    | `/pkfare-flight/*` | 8080 | Yes    |
+| `cithotel-search` | cithotel-search-dev.internal.bookcabin.com | `/*`               | 8080 | No     |
 
 **Frontend cluster** (`bc-frontend-cluster-dev`):
 
-| Service | Hosts | Path | Port | Public |
-|---------|-------|------|------|--------|
-| `esimtools` | dev-esimtools.bookcabin.com | `/*` | 3000 | Yes |
-| `ota-bc-ui` | dev-aws-v3.bookcabin.com | `/*` | 3000 | Yes |
+| Service     | Hosts                       | Path | Port | Public |
+| ----------- | --------------------------- | ---- | ---- | ------ |
+| `esimtools` | dev-esimtools.bookcabin.com | `/*` | 3000 | Yes    |
+| `ota-bc-ui` | dev-aws-v3.bookcabin.com    | `/*` | 3000 | Yes    |
 
 ### Prod
 
 **Backend cluster** (`bc-backend-cluster-prod`):
 
-| Service | Hosts | Path | Port | Public |
-|---------|-------|------|------|--------|
-| `gobc-sandbox` | api-ibe.bookcabin.com | `/gobc-sandbox/*` | 8080 | Yes |
-| `gobc-travel` | api-ibe.bookcabin.com | `/gobc-travel/*` | 8080 | Yes |
+| Service        | Hosts                 | Path              | Port | Public |
+| -------------- | --------------------- | ----------------- | ---- | ------ |
+| `gobc-sandbox` | api-ibe.bookcabin.com | `/gobc-sandbox/*` | 8080 | Yes    |
+| `gobc-travel`  | api-ibe.bookcabin.com | `/gobc-travel/*`  | 8080 | Yes    |
 
 **Frontend cluster** (`bc-frontend-cluster-prod`):
 
-| Service | Hosts | Path | Port | Public |
-|---------|-------|------|------|--------|
-| `esimtools` | esimvoucher.bookcabin.com | `/*` | 3000 | Yes |
+| Service     | Hosts                     | Path | Port | Public |
+| ----------- | ------------------------- | ---- | ---- | ------ |
+| `esimtools` | esimvoucher.bookcabin.com | `/*` | 3000 | Yes    |
 
 ---
 

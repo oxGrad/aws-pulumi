@@ -57,6 +57,13 @@ config:
           stripPathPrefix: true
           priority: 50
           port: 8080
+          monitoring:
+            enabled: true
+            logGroupName: /ecs/gobc-travel-dev
+            unhandledLogPattern: "ERROR"
+            latencySLASecs: 2.0
+            desiredTaskCount: 1
+            minHealthyHosts: 1
         # - name: pkfare-flight
         #   public: true
         #   hosts:
@@ -77,3 +84,6 @@ config:
         #   stripPathPrefix: false
         #   priority: 104
         #   port: 8080
+  notifications:endpoints:
+    teams:
+      enabled: true

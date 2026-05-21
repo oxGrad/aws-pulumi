@@ -1,3 +1,5 @@
 **/secrets.just
 **/.env
 docs/superpowers
+# platform/lambda/**/handler.zip
+platform/lambda/**/bootstrap

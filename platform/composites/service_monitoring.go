@@ -86,7 +86,7 @@ func ProvisionServiceMonitoring(ctx *pulumi.Context, name string, args ServiceMo
 			},
 			&cloudwatch.MetricAlarmMetricQueryArgs{
 				Id:         pulumi.String("e1"),
-				Expression: pulumi.String("m1/m2*100"),
+				Expression: pulumi.String("IF(m2>0, m1/m2*100, 0)"),
 				ReturnData: pulumi.Bool(true),
 				Label:      pulumi.String("5xx rate %"),
 			},

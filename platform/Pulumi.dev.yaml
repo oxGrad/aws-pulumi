@@ -118,6 +118,23 @@ config:
           port: 8080
           s3Buckets:
             - st-ibe-agoda-hotel-dev-apse1-01
+        - name: gobc-membership
+          public: true
+          hosts:
+            - devapiaws.bookcabin.com
+          paths:
+            - /gobc-membership/*
+          HealthCheckPath: /health
+          stripPathPrefix: true
+          priority: 1018
+          port: 8080
+          monitoring:
+            enabled: true
+            logGroupName: /ecs/gobc-membership-dev
+            unhandledLogPattern: "ERROR"
+            latencySLASecs: 2.0
+            desiredTaskCount: 1
+            minHealthyHosts: 1
   notifications:endpoints:
     teams:
       enabled: true

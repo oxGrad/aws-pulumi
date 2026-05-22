@@ -128,13 +128,13 @@ config:
           stripPathPrefix: true
           priority: 1018
           port: 8080
-          monitoring:
-            enabled: true
-            logGroupName: /ecs/gobc-membership-dev
-            unhandledLogPattern: "ERROR"
-            latencySLASecs: 2.0
-            desiredTaskCount: 1
-            minHealthyHosts: 1
+          # monitoring:
+          #   enabled: true
+          #   logGroupName: /ecs/gobc-membership-dev
+          #   unhandledLogPattern: "ERROR"
+          #   latencySLASecs: 2.0
+          #   desiredTaskCount: 1
+          #   minHealthyHosts: 1
   notifications:endpoints:
     teams:
       enabled: true

@@ -57,13 +57,20 @@ config:
           stripPathPrefix: true
           priority: 50
           port: 8080
+          autoscaling:
+            minCount: 1
+            maxCount: 5
+            cpuTarget: 60
+            memoryTarget: 60
           monitoring:
             enabled: true
-            logGroupName: /ecs/gobc-travel-dev
+            logGroupName: /ecs/gobc-travel-prod
             unhandledLogPattern: "ERROR"
             latencySLASecs: 2.0
             desiredTaskCount: 1
             minHealthyHosts: 1
+            cpuAlarmThreshold: 80
+            memoryAlarmThreshold: 80
         # - name: pkfare-flight
         #   public: true
         #   hosts:

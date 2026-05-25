@@ -71,16 +71,32 @@ config:
             minHealthyHosts: 1
             cpuAlarmThreshold: 80
             memoryAlarmThreshold: 80
-        # - name: pkfare-flight
-        #   public: true
-        #   hosts:
-        #     - apiaws.bookcabin.com
-        #   paths:
-        #     - /pkfare-flight/*
-        #   HealthCheckPath: /api/Search/HealthCheck
-        #   stripPathPrefix: true
-        #   priority: 1022
-        #   port: 8080
+        - name: pkfare-flight
+          public: true
+          hosts:
+            - api-ibe.bookcabin.com
+          paths:
+            - /pkfare-flight/*
+          HealthCheckPath: /api/Search/HealthCheck
+          stripPathPrefix: true
+          priority: 1022
+          port: 8080
+          s3Buckets:
+            - st-ibe-pkfareflight-prd-apse1-01
+          autoscaling:
+            minCount: 1
+            maxCount: 5
+            cpuTarget: 60
+            memoryTarget: 60
+          monitoring:
+            enabled: true
+            logGroupName: /ecs/pkfare-flight-prod
+            unhandledLogPattern: "ERROR"
+            latencySLASecs: 2.0
+            desiredTaskCount: 1
+            minHealthyHosts: 1
+            cpuAlarmThreshold: 80
+            memoryAlarmThreshold: 80
         # - name: cithotel-search
         #   public: false
         #   hosts:

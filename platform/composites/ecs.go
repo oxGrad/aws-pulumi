@@ -242,7 +242,7 @@ type provisionedService struct {
 func provisionAutoscaling(ctx *pulumi.Context, name string, svc ServiceConfig, clusterName pulumi.StringOutput, provider *aws.Provider) error {
 	as := svc.Autoscaling
 	// ECS service name convention must match what the deployment pipeline uses.
-	ecsServiceName := fmt.Sprintf("%s-%s", svc.Name, ctx.Stack())
+	ecsServiceName := svc.Name
 	resourceID := pulumi.Sprintf("service/%s/%s", clusterName, ecsServiceName)
 
 	target, err := appautoscaling.NewTarget(ctx, fmt.Sprintf("%s-asg-target", name), &appautoscaling.TargetArgs{

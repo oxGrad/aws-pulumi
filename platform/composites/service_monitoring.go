@@ -27,7 +27,10 @@ type ServiceMonitoringConfig struct {
 type ServiceMonitoringArgs struct {
 	Config          ServiceMonitoringConfig
 	ECSClusterName  string
-	ECSServiceName  string
+	ECSServiceName  string // bare service name used as CloudWatch ECS dimension (e.g. "gobc-sandbox")
+	// ServiceLabel is used for custom metric namespaces and dimensions; includes stack to avoid
+	// collisions when dev and prod share the same AWS account (e.g. "gobc-sandbox-dev").
+	ServiceLabel    string
 	// ListenerARN is the ALB listener ARN; the load-balancer dimension is derived from it.
 	ListenerARN     string
 	TargetGroupARN  pulumi.StringInput
@@ -159,7 +162,7 @@ func ProvisionServiceMonitoring(ctx *pulumi.Context, name string, args ServiceMo
 		if filterPattern == "" {
 			filterPattern = "ERROR"
 		}
-		metricNamespace := fmt.Sprintf("Platform/Services/%s", args.ECSServiceName)
+		metricNamespace := fmt.Sprintf("Platform/Services/%s", args.ServiceLabel)
 
 		_, err = components.NewLogMetricFilter(ctx, fmt.Sprintf("%s-unhandled-filter", name), &components.LogMetricFilterArgs{
 			LogGroupName:    pulumi.String(cfg.LogGroupName),
@@ -267,7 +270,7 @@ func ProvisionServiceMonitoring(ctx *pulumi.Context, name string, args ServiceMo
 		Namespace:        pulumi.String("Platform/Services"),
 		MetricName:       pulumi.String("InstancesSevere"),
 		Dimensions: pulumi.StringMap{
-			"ServiceName": pulumi.String(args.ECSServiceName),
+			"ServiceName": pulumi.String(args.ServiceLabel),
 		},
 		Statistic:          pulumi.String("Maximum"),
 		Period:             pulumi.Int(60),

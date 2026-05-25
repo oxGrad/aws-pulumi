@@ -112,11 +112,28 @@ func NewECSRoles(ctx *pulumi.Context, name string, args *ECSRolesArgs, opts ...p
 		}
 	}
 
-	taskStatements := []map[string]any{{
-		"Effect":   "Allow",
-		"Action":   []string{"secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret", "secretsmanager:ListSecretVersionIds"},
-		"Resource": "*",
-	}}
+	taskStatements := []map[string]any{
+		{
+			"Effect":   "Allow",
+			"Action":   []string{"secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret", "secretsmanager:ListSecretVersionIds"},
+			"Resource": "*",
+		},
+		{
+			"Effect":   "Allow",
+			"Action":   []string{"xray:PutTraceSegments", "xray:PutTelemetryRecords"},
+			"Resource": "*",
+		},
+		{
+			"Effect":   "Allow",
+			"Action":   []string{"logs:PutLogEvents"},
+			"Resource": "*",
+		},
+		{
+			"Effect":   "Allow",
+			"Action":   []string{"ssm:GetParameter"},
+			"Resource": fmt.Sprintf("arn:aws:ssm:%s:%s:parameter/%s/%s/*", args.Region, args.AccountID, args.ServiceName, args.Stack),
+		},
+	}
 
 	if len(args.S3Buckets) > 0 {
 		s3Resources := make([]string, 0, len(args.S3Buckets)*2)

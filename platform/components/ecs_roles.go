@@ -64,7 +64,7 @@ func NewECSRoles(ctx *pulumi.Context, name string, args *ECSRolesArgs, opts ...p
 		"Statement": []map[string]any{
 			{
 				"Effect":   "Allow",
-				"Action":   []string{"ssm:GetParameters"},
+				"Action":   []string{"ssm:GetParameters", "ssm:GetParameter"},
 				"Resource": fmt.Sprintf("arn:aws:ssm:%s:%s:parameter/%s/%s/*", args.Region, args.AccountID, args.ServiceName, args.Stack),
 			},
 			{

@@ -256,6 +256,22 @@ func NewExecutorPolicy(ctx *pulumi.Context, name string, args *ExecutorPolicyArg
 					"Resource": "*",
 				},
 				{
+					"Sid":    "AppAutoscalingManagement",
+					"Effect": "Allow",
+					"Action": []string{
+						"application-autoscaling:RegisterScalableTarget",
+						"application-autoscaling:DeregisterScalableTarget",
+						"application-autoscaling:DescribeScalableTargets",
+						"application-autoscaling:PutScalingPolicy",
+						"application-autoscaling:DeleteScalingPolicy",
+						"application-autoscaling:DescribeScalingPolicies",
+						"application-autoscaling:TagResource",
+						"application-autoscaling:UntagResource",
+						"application-autoscaling:ListTagsForResource",
+					},
+					"Resource": "*",
+				},
+				{
 					"Sid":    "LambdaManagement",
 					"Effect": "Allow",
 					"Action": []string{

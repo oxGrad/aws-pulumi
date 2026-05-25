@@ -6,10 +6,20 @@ import (
 	"strings"
 
 	"github.com/pulumi/pulumi-aws/sdk/v7/go/aws"
+	"github.com/pulumi/pulumi-aws/sdk/v7/go/aws/appautoscaling"
 	"github.com/pulumi/pulumi-aws/sdk/v7/go/aws/ecr"
 	"github.com/pulumi/pulumi-aws/sdk/v7/go/aws/servicediscovery"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
+
+// AutoscalingConfig enables ECS Application Auto Scaling for a service.
+// The ECS service must be named "{service.Name}-{stack}" (pipeline convention).
+type AutoscalingConfig struct {
+	MinCount     int     `json:"minCount"`
+	MaxCount     int     `json:"maxCount"`
+	CPUTarget    float64 `json:"cpuTarget,omitempty"`    // target CPU %; 0 = disabled
+	MemoryTarget float64 `json:"memoryTarget,omitempty"` // target memory %; 0 = disabled
+}
 
 type ServiceConfig struct {
 	Name                string                   `json:"name"`
@@ -22,6 +32,7 @@ type ServiceConfig struct {
 	HealthCheckPath     string                   `json:"healthCheckPath"`
 	HealthCheckInterval int                      `json:"healthCheckInterval"`
 	Monitoring          *ServiceMonitoringConfig `json:"monitoring,omitempty"`
+	Autoscaling         *AutoscalingConfig       `json:"autoscaling,omitempty"`
 	S3Buckets           []string                 `json:"s3Buckets,omitempty"`
 }
 
@@ -211,6 +222,12 @@ func ProvisionECS(ctx *pulumi.Context, args ProvisionECSArgs, provider *aws.Prov
 
 			ctx.Export(fmt.Sprintf("%s.%s.targetGroupARN", cluster.Name, svc.Name), ps.targetGroupARN)
 			ctx.Export(fmt.Sprintf("%s.%s.listenerRuleARN", cluster.Name, svc.Name), ps.listenerRuleARN)
+
+			if svc.Autoscaling != nil {
+				if err := provisionAutoscaling(ctx, resourceName, svc, ecsCluster.ClusterName, provider); err != nil {
+					return nil, err
+				}
+			}
 		}
 	}
 
@@ -220,6 +237,64 @@ func ProvisionECS(ctx *pulumi.Context, args ProvisionECSArgs, provider *aws.Prov
 type provisionedService struct {
 	targetGroupARN  pulumi.StringOutput
 	listenerRuleARN pulumi.StringOutput
+}
+
+func provisionAutoscaling(ctx *pulumi.Context, name string, svc ServiceConfig, clusterName pulumi.StringOutput, provider *aws.Provider) error {
+	as := svc.Autoscaling
+	// ECS service name convention must match what the deployment pipeline uses.
+	ecsServiceName := fmt.Sprintf("%s-%s", svc.Name, ctx.Stack())
+	resourceID := pulumi.Sprintf("service/%s/%s", clusterName, ecsServiceName)
+
+	target, err := appautoscaling.NewTarget(ctx, fmt.Sprintf("%s-asg-target", name), &appautoscaling.TargetArgs{
+		MinCapacity:       pulumi.Int(as.MinCount),
+		MaxCapacity:       pulumi.Int(as.MaxCount),
+		ResourceId:        resourceID,
+		ScalableDimension: pulumi.String("ecs:service:DesiredCount"),
+		ServiceNamespace:  pulumi.String("ecs"),
+	}, pulumi.Provider(provider))
+	if err != nil {
+		return err
+	}
+
+	if as.CPUTarget > 0 {
+		_, err = appautoscaling.NewPolicy(ctx, fmt.Sprintf("%s-asg-cpu", name), &appautoscaling.PolicyArgs{
+			Name:              pulumi.Sprintf("%s-asg-cpu", name),
+			PolicyType:        pulumi.String("TargetTrackingScaling"),
+			ResourceId:        target.ResourceId,
+			ScalableDimension: target.ScalableDimension,
+			ServiceNamespace:  target.ServiceNamespace,
+			TargetTrackingScalingPolicyConfiguration: &appautoscaling.PolicyTargetTrackingScalingPolicyConfigurationArgs{
+				PredefinedMetricSpecification: &appautoscaling.PolicyTargetTrackingScalingPolicyConfigurationPredefinedMetricSpecificationArgs{
+					PredefinedMetricType: pulumi.String("ECSServiceAverageCPUUtilization"),
+				},
+				TargetValue: pulumi.Float64(as.CPUTarget),
+			},
+		}, pulumi.Provider(provider))
+		if err != nil {
+			return err
+		}
+	}
+
+	if as.MemoryTarget > 0 {
+		_, err = appautoscaling.NewPolicy(ctx, fmt.Sprintf("%s-asg-mem", name), &appautoscaling.PolicyArgs{
+			Name:              pulumi.Sprintf("%s-asg-mem", name),
+			PolicyType:        pulumi.String("TargetTrackingScaling"),
+			ResourceId:        target.ResourceId,
+			ScalableDimension: target.ScalableDimension,
+			ServiceNamespace:  target.ServiceNamespace,
+			TargetTrackingScalingPolicyConfiguration: &appautoscaling.PolicyTargetTrackingScalingPolicyConfigurationArgs{
+				PredefinedMetricSpecification: &appautoscaling.PolicyTargetTrackingScalingPolicyConfigurationPredefinedMetricSpecificationArgs{
+					PredefinedMetricType: pulumi.String("ECSServiceAverageMemoryUtilization"),
+				},
+				TargetValue: pulumi.Float64(as.MemoryTarget),
+			},
+		}, pulumi.Provider(provider))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func provisionService(ctx *pulumi.Context, name string, svc ServiceConfig, listenerARN, vpcID string, provider *aws.Provider) (*provisionedService, error) {

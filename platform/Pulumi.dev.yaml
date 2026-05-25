@@ -60,6 +60,11 @@ config:
           stripPathPrefix: true
           priority: 1021
           port: 8080
+          autoscaling:
+            minCount: 1
+            maxCount: 5
+            cpuTarget: 60
+            memoryTarget: 60
           monitoring:
             enabled: true
             logGroupName: /ecs/gobc-sandbox-dev
@@ -67,6 +72,8 @@ config:
             latencySLASecs: 2.0
             desiredTaskCount: 1
             minHealthyHosts: 1
+            cpuAlarmThreshold: 80
+            memoryAlarmThreshold: 80
         - name: gobc-travel
           public: true
           hosts:
@@ -77,6 +84,11 @@ config:
           stripPathPrefix: true
           priority: 999
           port: 8080
+          autoscaling:
+            minCount: 1
+            maxCount: 5
+            cpuTarget: 60
+            memoryTarget: 60
           monitoring:
             enabled: true
             logGroupName: /ecs/gobc-travel-dev
@@ -84,6 +96,8 @@ config:
             latencySLASecs: 2.0
             desiredTaskCount: 1
             minHealthyHosts: 1
+            cpuAlarmThreshold: 80
+            memoryAlarmThreshold: 80
         - name: managebooking
           public: true
           hosts:

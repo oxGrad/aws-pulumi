@@ -62,7 +62,7 @@ config:
           port: 8080
           autoscaling:
             minCount: 1
-            maxCount: 5
+            maxCount: 3
             cpuTarget: 60
             memoryTarget: 60
           monitoring:
@@ -86,7 +86,7 @@ config:
           port: 8080
           autoscaling:
             minCount: 1
-            maxCount: 5
+            maxCount: 3
             cpuTarget: 60
             memoryTarget: 60
           monitoring:

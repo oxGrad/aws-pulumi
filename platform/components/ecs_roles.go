@@ -133,6 +133,18 @@ func NewECSRoles(ctx *pulumi.Context, name string, args *ECSRolesArgs, opts ...p
 			"Action":   []string{"ssm:GetParameter"},
 			"Resource": fmt.Sprintf("arn:aws:ssm:%s:%s:parameter/%s/%s/*", args.Region, args.AccountID, args.ServiceName, args.Stack),
 		},
+		{
+			"Effect": "Allow",
+			"Action": []string{
+				"sqs:SendMessage",
+				"sqs:ReceiveMessage",
+				"sqs:DeleteMessage",
+				"sqs:ChangeMessageVisibility",
+				"sqs:GetQueueAttributes",
+				"sqs:GetQueueUrl",
+			},
+			"Resource": fmt.Sprintf("arn:aws:sqs:%s:%s:*", args.Region, args.AccountID),
+		},
 	}
 
 	if len(args.S3Buckets) > 0 {

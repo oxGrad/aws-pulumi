@@ -43,12 +43,12 @@ config:
       publicListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-public-dev/3058638beebb0b05/38fe39d69bb93911
       privateListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-private-dev/881aa8428c606707/539f0089fb48f000
       capacityProviderStrategies:
-        - capacityProvider: FARGATE_SPOT
-          weight: 4
-          base: 1
         - capacityProvider: FARGATE
           weight: 1
           base: 0
+        - capacityProvider: FARGATE_SPOT
+          weight: 4
+          base: 1
       services:
         - name: gobc-sandbox
           public: true

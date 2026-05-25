@@ -48,12 +48,13 @@ func env(ctx *pulumi.Context, cfg *stackCfg, provider *aws.Provider) error {
 				continue
 			}
 			resourceName := fmt.Sprintf("bc-%s-%s-%s", cluster.Name, svc.Name, ctx.Stack())
-			ecsServiceName := fmt.Sprintf("%s-%s", svc.Name, ctx.Stack())
+			ecsServiceName := svc.Name
 
 			if err := composites.ProvisionServiceMonitoring(ctx, resourceName, composites.ServiceMonitoringArgs{
 				Config:          *svc.Monitoring,
 				ECSClusterName:  ecsClusterName,
 				ECSServiceName:  ecsServiceName,
+				ServiceLabel:    fmt.Sprintf("%s-%s", svc.Name, ctx.Stack()),
 				ListenerARN:     ps.ListenerARN,
 				TargetGroupARN:  ps.TargetGroupARN,
 				CriticalActions: pulumi.Array{notifs.CriticalTopicARN},

@@ -14,10 +14,12 @@ import (
 type ServiceMonitoringConfig struct {
 	Enabled             bool    `json:"enabled"`
 	LogGroupName        string  `json:"logGroupName"`
-	UnhandledLogPattern string  `json:"unhandledLogPattern"` // default: "ERROR"
-	LatencySLASecs      float64 `json:"latencySLASecs"`      // p99 threshold in seconds
+	UnhandledLogPattern string  `json:"unhandledLogPattern"`  // default: "ERROR"
+	LatencySLASecs      float64 `json:"latencySLASecs"`       // p99 threshold in seconds
 	DesiredTaskCount    int     `json:"desiredTaskCount"`
 	MinHealthyHosts     int     `json:"minHealthyHosts"`
+	CPUAlarmThreshold   float64 `json:"cpuAlarmThreshold"`    // default: 85; set above autoscaling cpuTarget
+	MemoryAlarmThreshold float64 `json:"memoryAlarmThreshold"` // default: 80; set above autoscaling memoryTarget
 }
 
 // ServiceMonitoringArgs combines runtime infrastructure values with config.
@@ -189,16 +191,20 @@ func ProvisionServiceMonitoring(ctx *pulumi.Context, name string, args ServiceMo
 	}
 
 	// ── Warning: High CPU ──────────────────────────────────────────────────
+	cpuThreshold := cfg.CPUAlarmThreshold
+	if cpuThreshold == 0 {
+		cpuThreshold = 85
+	}
 	_, err = components.NewCloudwatchAlarm(ctx, fmt.Sprintf("%s-cpu", name), &components.CloudwatchAlarmArgs{
 		AlarmName:          pulumi.Sprintf("%s-cpu", name),
-		AlarmDescription:   pulumi.String("CPU utilization > 85%"),
+		AlarmDescription:   pulumi.Sprintf("CPU utilization > %.0f%%", cpuThreshold),
 		Namespace:          pulumi.String("AWS/ECS"),
 		MetricName:         pulumi.String("CPUUtilization"),
 		Dimensions:         ecsDims,
 		Statistic:          pulumi.String("Average"),
 		Period:             pulumi.Int(300),
 		ComparisonOperator: pulumi.String("GreaterThanThreshold"),
-		Threshold:          pulumi.Float64(85),
+		Threshold:          pulumi.Float64(cpuThreshold),
 		EvaluationPeriods:  pulumi.Int(2),
 		DatapointsToAlarm:  pulumi.Int(2),
 		AlarmActions:       warningActions,
@@ -209,16 +215,20 @@ func ProvisionServiceMonitoring(ctx *pulumi.Context, name string, args ServiceMo
 	}
 
 	// ── Warning: High memory ───────────────────────────────────────────────
+	memThreshold := cfg.MemoryAlarmThreshold
+	if memThreshold == 0 {
+		memThreshold = 80
+	}
 	_, err = components.NewCloudwatchAlarm(ctx, fmt.Sprintf("%s-memory", name), &components.CloudwatchAlarmArgs{
 		AlarmName:          pulumi.Sprintf("%s-memory", name),
-		AlarmDescription:   pulumi.String("Memory utilization > 80%"),
+		AlarmDescription:   pulumi.Sprintf("Memory utilization > %.0f%%", memThreshold),
 		Namespace:          pulumi.String("AWS/ECS"),
 		MetricName:         pulumi.String("MemoryUtilization"),
 		Dimensions:         ecsDims,
 		Statistic:          pulumi.String("Average"),
 		Period:             pulumi.Int(300),
 		ComparisonOperator: pulumi.String("GreaterThanThreshold"),
-		Threshold:          pulumi.Float64(80),
+		Threshold:          pulumi.Float64(memThreshold),
 		EvaluationPeriods:  pulumi.Int(2),
 		DatapointsToAlarm:  pulumi.Int(2),
 		AlarmActions:       warningActions,

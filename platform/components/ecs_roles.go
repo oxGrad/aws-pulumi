@@ -145,6 +145,14 @@ func NewECSRoles(ctx *pulumi.Context, name string, args *ECSRolesArgs, opts ...p
 			},
 			"Resource": fmt.Sprintf("arn:aws:sqs:%s:%s:*", args.Region, args.AccountID),
 		},
+		{
+			"Effect": "Allow",
+			"Action": []string{
+				"sns:Publish",
+				"sns:ListTopics",
+			},
+			"Resource": "*",
+		},
 	}
 
 	if len(args.S3Buckets) > 0 {

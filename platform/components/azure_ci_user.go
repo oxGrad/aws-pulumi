@@ -120,6 +120,18 @@ func NewAzureCIUser(ctx *pulumi.Context, name string, args *AzureCIUserArgs, opt
 				"Resource": "*",
 			},
 			{
+				"Sid":    "SSMParameterAccess",
+				"Effect": "Allow",
+				"Action": []string{
+					"ssm:PutParameter",
+					"ssm:GetParameter",
+					"ssm:GetParameters",
+					"ssm:AddTagsToResource",
+					"ssm:ListTagsForResource",
+				},
+				"Resource": "*",
+			},
+			{
 				"Sid":    "CloudWatchLogsAccess",
 				"Effect": "Allow",
 				"Action": []string{

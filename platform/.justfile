@@ -1,7 +1,7 @@
 set dotenv-load := true
 
 login:
-  pulumi login s3://bc-sre-pulumi-state
+  pulumi login s3://example-pulumi-state
 
 new-stack-dev:
   just new-stack dev

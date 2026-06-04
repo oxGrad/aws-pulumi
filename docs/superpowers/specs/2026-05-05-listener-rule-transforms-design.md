@@ -6,7 +6,7 @@
 
 ## Problem
 
-The current `serviceConfig` accepts scalar `host` and `path` strings. ALB `HostHeader` and `PathPattern` conditions support multiple values natively, but there is no way to express this in the stack config. Additionally, when a service is mounted at a sub-path (e.g. `/gobc-sandbox/*`), the backend receives the full path including the prefix, requiring the application to be aware of the mount point.
+The current `serviceConfig` accepts scalar `host` and `path` strings. ALB `HostHeader` and `PathPattern` conditions support multiple values natively, but there is no way to express this in the stack config. Additionally, when a service is mounted at a sub-path (e.g. `/app-sandbox/*`), the backend receives the full path including the prefix, requiring the application to be aware of the mount point.
 
 ## Solution
 
@@ -33,13 +33,13 @@ No backward compat shim — all YAML stacks migrate to plural fields.
 
 All services using singular `host`/`path` move to `hosts`/`paths` as single-element arrays. Services that need path prefix stripping add `stripPathPrefix: true`.
 
-Example (`Pulumi.dev.yaml`, gobc-sandbox):
+Example (`Pulumi.dev.yaml`, app-sandbox):
 ```yaml
-- name: gobc-sandbox
+- name: app-sandbox
   hosts:
-    - devapiaws.bookcabin.com
+    - devapiaws.example.com
   paths:
-    - /gobc-sandbox/*
+    - /app-sandbox/*
   stripPathPrefix: true
   priority: 1021
   port: 8080
@@ -62,7 +62,7 @@ type ListenerRuleArgs struct {
 
 The ALB `HostHeader` and `PathPattern` conditions already accept `Values []string`, so the arrays map directly with no structural changes to the condition block.
 
-When `StripPathPrefix: true`, a URL rewrite action is added before the `forward` action. The prefix to strip is derived from the first `Paths` entry by taking everything before the `*` (e.g. `/gobc-sandbox/*` → strip `/gobc-sandbox`). The forwarded request path becomes `/` + the remaining suffix.
+When `StripPathPrefix: true`, a URL rewrite action is added before the `forward` action. The prefix to strip is derived from the first `Paths` entry by taking everything before the `*` (e.g. `/app-sandbox/*` → strip `/app-sandbox`). The forwarded request path becomes `/` + the remaining suffix.
 
 The exact Pulumi AWS v7 Go API for the URL rewrite action will be verified via context7 during implementation (feature added to AWS ALB in 2024).
 
@@ -91,7 +91,7 @@ rule, err := components.NewListenerRule(ctx, resourceName, &components.ListenerR
 | `platform/config.go` | Replace `Host`/`Path` with `Hosts`/`Paths` slices, add `StripPathPrefix` |
 | `platform/components/listener_rule.go` | Update args, pass arrays to conditions, add path rewrite action |
 | `platform/env.go` | Update call site, default paths fallback |
-| `platform/Pulumi.dev.yaml` | Migrate to plural fields, add `stripPathPrefix: true` for gobc-sandbox |
+| `platform/Pulumi.dev.yaml` | Migrate to plural fields, add `stripPathPrefix: true` for app-sandbox |
 | `platform/Pulumi.prod.yaml` | Migrate to plural fields |
 
 ## Out of Scope

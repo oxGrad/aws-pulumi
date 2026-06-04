@@ -27,8 +27,8 @@ type webhookEntry struct {
 // webhookMap is the JSON structure stored in SSM:
 //
 //	{
-//	  "gobc-sandbox": {"critical": "https://...", "warning": "https://..."},
-//	  "gobc-travel":  {"critical": "https://...", "warning": "https://..."}
+//	  "app-sandbox": {"critical": "https://...", "warning": "https://..."},
+//	  "app-travel":  {"critical": "https://...", "warning": "https://..."}
 //	}
 type webhookMap map[string]webhookEntry
 

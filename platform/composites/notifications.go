@@ -41,7 +41,7 @@ const teamsNotifierZipPath = "lambda/teams-notifier/handler.zip"
 func ProvisionNotifications(ctx *pulumi.Context, args NotificationsConfig, provider *aws.Provider) (*ProvisionedNotifications, error) {
 	stack := ctx.Stack()
 
-	criticalName := fmt.Sprintf("bc-%s-critical", stack)
+	criticalName := fmt.Sprintf("example-%s-critical", stack)
 	critical, err := components.NewSNSTopic(ctx, criticalName, &components.SNSTopicArgs{
 		Name:          pulumi.String(criticalName),
 		Subscriptions: toTopicSubscriptions(args.Critical),
@@ -50,7 +50,7 @@ func ProvisionNotifications(ctx *pulumi.Context, args NotificationsConfig, provi
 		return nil, err
 	}
 
-	warningName := fmt.Sprintf("bc-%s-warning", stack)
+	warningName := fmt.Sprintf("example-%s-warning", stack)
 	warning, err := components.NewSNSTopic(ctx, warningName, &components.SNSTopicArgs{
 		Name:          pulumi.String(warningName),
 		Subscriptions: toTopicSubscriptions(args.Warning),
@@ -60,7 +60,7 @@ func ProvisionNotifications(ctx *pulumi.Context, args NotificationsConfig, provi
 	}
 
 	if args.Teams != nil && args.Teams.Enabled {
-		notifierName := fmt.Sprintf("bc-%s-teams-notifier", stack)
+		notifierName := fmt.Sprintf("example-%s-teams-notifier", stack)
 		ssmPath := fmt.Sprintf("/bc/%s/teams-notifier", stack)
 		_, err = components.NewTeamsNotifier(ctx, notifierName, &components.TeamsNotifierArgs{
 			Name:             notifierName,

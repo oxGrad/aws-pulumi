@@ -4,7 +4,7 @@ This Pulumi project manages the ECS clusters, ALB listener rules, and target gro
 
 ## What This Project Manages
 
-- **ECS Clusters** — `bc-frontend-cluster` (Next.js and React.js apps) and `bc-backend-cluster` (Go/.NET apps)
+- **ECS Clusters** — `example-frontend-cluster` (Next.js and React.js apps) and `example-backend-cluster` (Go/.NET apps)
 - **ALB Target Groups** — one per service per environment (dev/prod), used by the pipeline
 - **ALB Listener Rules** — routes traffic from the ALB to each service's target group
 - **Service Connect Namespaces** — `dev.internal` and `prod.internal` for inter-service communication
@@ -30,8 +30,8 @@ Choose the cluster based on the service's runtime:
 
 | Cluster               | `name` in YAML | Services                       |
 | --------------------- | -------------- | ------------------------------ |
-| `bc-backend-cluster`  | `backend`      | Go, .NET (port 8080 typically) |
-| `bc-frontend-cluster` | `frontend`     | Node.js (port 3000 typically)  |
+| `example-backend-cluster`  | `backend`      | Go, .NET (port 8080 typically) |
+| `example-frontend-cluster` | `frontend`     | Node.js (port 3000 typically)  |
 
 ### Step 2: Add the Service to `Pulumi.dev.yaml`
 
@@ -48,7 +48,7 @@ cluster:clusters:
       - name: my-new-service # lowercase, hyphenated, matches ECR repo name
         public: true # true = public ALB, false = private ALB
         hosts:
-          - devapiaws.bookcabin.com # ALB hostname (use existing host for path-based routing)
+          - devapiaws.example.com # ALB hostname (use existing host for path-based routing)
         paths:
           - /my-new-service/* # URL path prefix for this service
         HealthCheckPath: /health # ALB health check endpoint (must return 200)
@@ -68,7 +68,7 @@ cluster:clusters:
       - name: my-frontend-app
         public: true
         hosts:
-          - dev-my-frontend.bookcabin.com
+          - dev-my-frontend.example.com
         paths:
           - /*
         priority: 1025
@@ -86,7 +86,7 @@ cluster:clusters:
       - name: my-new-service
         public: true
         hosts:
-          - api-ibe.bookcabin.com
+          - api-ibe.example.com
         paths:
           - /my-new-service/*
         HealthCheckPath: /health
@@ -134,7 +134,7 @@ aws elbv2 describe-target-groups \
 The ARN format looks like:
 
 ```
-arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:targetgroup/my-new-service-dev/abc123def456
+arn:aws:elasticloadbalancing:ap-southeast-1:123456789012:targetgroup/my-new-service-dev/abc123def456
 ```
 
 ### Step 6: Use the ARNs in Your Pipeline
@@ -147,8 +147,8 @@ extends:
   parameters:
     variableGroups:
       - azure-ci-deployment
-    targetGroupArnDev: "arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:targetgroup/my-new-service-dev/abc123def456"
-    targetGroupArnProd: "arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:targetgroup/my-new-service-prod/def456abc789"
+    targetGroupArnDev: "arn:aws:elasticloadbalancing:ap-southeast-1:123456789012:targetgroup/my-new-service-dev/abc123def456"
+    targetGroupArnProd: "arn:aws:elasticloadbalancing:ap-southeast-1:123456789012:targetgroup/my-new-service-prod/def456abc789"
 ```
 
 See the [cicd-templates deployment guide](../../backend/cicd-templates/docs/usage-guide.md) for the full pipeline setup.
@@ -163,7 +163,7 @@ All fields under `services` in the cluster YAML:
 | ----------------- | -------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `name`            | Yes      | string | Service identifier. Must be lowercase and hyphenated. Must match the ECR repository name and the ECS service name.                                                            |
 | `public`          | Yes      | bool   | `true` routes via the public ALB; `false` routes via the private (internal) ALB.                                                                                              |
-| `hosts`           | Yes      | list   | ALB hostnames to match (e.g., `devapiaws.bookcabin.com`). Multiple services share the same hostname and are differentiated by `paths`.                                        |
+| `hosts`           | Yes      | list   | ALB hostnames to match (e.g., `devapiaws.example.com`). Multiple services share the same hostname and are differentiated by `paths`.                                        |
 | `paths`           | Yes      | list   | URL path patterns to match (e.g., `/my-service/*`). Use `/*` to match all paths when the service owns the entire hostname.                                                    |
 | `HealthCheckPath` | No       | string | ALB health check URL path. Defaults to `/`. Must return HTTP 200.                                                                                                             |
 | `stripPathPrefix` | No       | bool   | When `true`, strips the first path segment before forwarding to the container (e.g., `/my-service/users` → `/users`). Use `false` when the app handles its own prefix.        |
@@ -192,17 +192,17 @@ ALB rules are evaluated in ascending priority order (lowest number = first match
 
 **Dev backend ALB:**
 
-- `800` — ota-bc-ui (frontend, broad catch-all)
-- `999` — gobc-travel
+- `800` — app-frontend (frontend, broad catch-all)
+- `999` — app-travel
 - `1012` — managebooking
 - `1020` — esimtools
-- `1021` — gobc-sandbox
+- `1021` — app-sandbox
 - `1022` — pkfare-flight
 
 **Prod backend ALB:**
 
-- `50` — gobc-travel
-- `1021` — gobc-sandbox
+- `50` — app-travel
+- `1021` — app-sandbox
 
 Pick a priority that doesn't conflict with existing rules. For new path-based backend services, values in the `1000–1100` range work well. For services that own an entire hostname (wildcard `/*`), use a higher number (evaluated later) to avoid blocking other path-based rules.
 
@@ -212,37 +212,37 @@ Pick a priority that doesn't conflict with existing rules. For new path-based ba
 
 ### Dev
 
-**Backend cluster** (`bc-backend-cluster-dev`):
+**Backend cluster** (`example-backend-cluster-dev`):
 
 | Service           | Hosts                                      | Path               | Port | Public |
 | ----------------- | ------------------------------------------ | ------------------ | ---- | ------ |
-| `gobc-sandbox`    | devapiaws.bookcabin.com                    | `/gobc-sandbox/*`  | 8080 | Yes    |
-| `gobc-travel`     | devapiaws.bookcabin.com                    | `/gobc-travel/*`   | 8080 | Yes    |
-| `managebooking`   | devapiaws.bookcabin.com                    | `/managebooking/*` | 8080 | Yes    |
-| `pkfare-flight`   | devapiaws.bookcabin.com                    | `/pkfare-flight/*` | 8080 | Yes    |
-| `cithotel-search` | cithotel-search-dev.internal.bookcabin.com | `/*`               | 8080 | No     |
+| `app-sandbox`    | devapiaws.example.com                    | `/app-sandbox/*`  | 8080 | Yes    |
+| `app-travel`     | devapiaws.example.com                    | `/app-travel/*`   | 8080 | Yes    |
+| `managebooking`   | devapiaws.example.com                    | `/managebooking/*` | 8080 | Yes    |
+| `pkfare-flight`   | devapiaws.example.com                    | `/pkfare-flight/*` | 8080 | Yes    |
+| `cithotel-search` | cithotel-search-dev.internal.example.com | `/*`               | 8080 | No     |
 
-**Frontend cluster** (`bc-frontend-cluster-dev`):
+**Frontend cluster** (`example-frontend-cluster-dev`):
 
 | Service     | Hosts                       | Path | Port | Public |
 | ----------- | --------------------------- | ---- | ---- | ------ |
-| `esimtools` | dev-esimtools.bookcabin.com | `/*` | 3000 | Yes    |
-| `ota-bc-ui` | dev-aws-v3.bookcabin.com    | `/*` | 3000 | Yes    |
+| `esimtools` | dev-esimtools.example.com | `/*` | 3000 | Yes    |
+| `app-frontend` | dev-aws-v3.example.com    | `/*` | 3000 | Yes    |
 
 ### Prod
 
-**Backend cluster** (`bc-backend-cluster-prod`):
+**Backend cluster** (`example-backend-cluster-prod`):
 
 | Service        | Hosts                 | Path              | Port | Public |
 | -------------- | --------------------- | ----------------- | ---- | ------ |
-| `gobc-sandbox` | api-ibe.bookcabin.com | `/gobc-sandbox/*` | 8080 | Yes    |
-| `gobc-travel`  | api-ibe.bookcabin.com | `/gobc-travel/*`  | 8080 | Yes    |
+| `app-sandbox` | api-ibe.example.com | `/app-sandbox/*` | 8080 | Yes    |
+| `app-travel`  | api-ibe.example.com | `/app-travel/*`  | 8080 | Yes    |
 
-**Frontend cluster** (`bc-frontend-cluster-prod`):
+**Frontend cluster** (`example-frontend-cluster-prod`):
 
 | Service     | Hosts                     | Path | Port | Public |
 | ----------- | ------------------------- | ---- | ---- | ------ |
-| `esimtools` | esimvoucher.bookcabin.com | `/*` | 3000 | Yes    |
+| `esimtools` | esimvoucher.example.com | `/*` | 3000 | Yes    |
 
 ---
 
@@ -250,7 +250,7 @@ Pick a priority that doesn't conflict with existing rules. For new path-based ba
 
 - Pulumi CLI installed: `brew install pulumi`
 - AWS credentials configured (`aws configure` or assume the `pulumi-executor` profile)
-- Access to the `gobc-pulumi` Pulumi organization
+- Access to the `aws-pulumi` Pulumi organization
 - Go 1.21+ (for running the Pulumi Go program)
 
 Log in to Pulumi before running any commands:

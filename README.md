@@ -1,6 +1,6 @@
-# gobc-pulumi
+# aws-pulumi
 
-Infrastructure as Code for BookCabin's AWS platform, managed with Pulumi (Go).
+Infrastructure as Code for Example's AWS platform, managed with Pulumi (Go).
 
 This repository contains two independent Pulumi projects with different lifecycles and purposes.
 
@@ -29,7 +29,7 @@ Manages all environment infrastructure. This is the project you will interact wi
 
 What it manages:
 
-- **ECS clusters** — `bc-backend-cluster` and `bc-frontend-cluster`
+- **ECS clusters** — `example-backend-cluster` and `example-frontend-cluster`
 - **ALB target groups and listener rules** — one per service per environment
 - **ECR repositories** — one per service (created in dev, looked up in prod)
 - **IAM task and execution roles** — one pair per service
@@ -85,7 +85,7 @@ deployment pipeline to run first before monitoring or autoscaling can be enabled
 
 | Environment | Pulumi Stack | AWS Account  |
 | ----------- | ------------ | ------------ |
-| Development | `dev`        | 626883896657 |
-| Production  | `prod`       | 626883896657 |
+| Development | `dev`        | 123456789012 |
+| Production  | `prod`       | 123456789012 |
 
 Infrastructure changes are applied exclusively through the Azure Pipeline. Do not run `pulumi up` locally unless you are SRE/DevOps with explicit approval.

@@ -27,9 +27,9 @@ type ServiceMonitoringConfig struct {
 type ServiceMonitoringArgs struct {
 	Config          ServiceMonitoringConfig
 	ECSClusterName  string
-	ECSServiceName  string // bare service name used as CloudWatch ECS dimension (e.g. "gobc-sandbox")
+	ECSServiceName  string // bare service name used as CloudWatch ECS dimension (e.g. "app-sandbox")
 	// ServiceLabel is used for custom metric namespaces and dimensions; includes stack to avoid
-	// collisions when dev and prod share the same AWS account (e.g. "gobc-sandbox-dev").
+	// collisions when dev and prod share the same AWS account (e.g. "app-sandbox-dev").
 	ServiceLabel    string
 	// ListenerARN is the ALB listener ARN; the load-balancer dimension is derived from it.
 	ListenerARN     string

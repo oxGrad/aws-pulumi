@@ -7,8 +7,8 @@ config:
   cluster:clusters:
     - name: frontend
       shortName: fe
-      publicListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-public-dev/3058638beebb0b05/38fe39d69bb93911
-      privateListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-private-dev/881aa8428c606707/539f0089fb48f000
+      publicListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:123456789012:listener/app/alb-public-dev/3058638beebb0b05/38fe39d69bb93911
+      privateListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:123456789012:listener/app/alb-private-dev/881aa8428c606707/539f0089fb48f000
       capacityProviderStrategies:
         - capacityProvider: FARGATE
           weight: 1
@@ -17,31 +17,26 @@ config:
           weight: 4
           base: 0
       services:
-        - name: esimtools
+        - name: customer
           public: true
-          # hosts:
-          #   - dev-aws.bookcabin.com
-          # paths:
-          #   - /esim/voucher/*
-          # stripPathPrefix: true
           hosts:
-            - dev-esimtools.bookcabin.com
+            - dev-customer.graditya.com
           paths:
             - /*
           priority: 1020
           port: 3000
-        - name: ota-bc-ui
+        - name: landing-page
           public: true
           hosts:
-            - dev-aws-v3.bookcabin.com
+            - dev-landing.graditya.com
           paths:
             - /*
           priority: 800
           port: 3000
     - name: backend
       shortName: be
-      publicListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-public-dev/3058638beebb0b05/38fe39d69bb93911
-      privateListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-private-dev/881aa8428c606707/539f0089fb48f000
+      publicListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:123456789012:listener/app/alb-public-dev/3058638beebb0b05/38fe39d69bb93911
+      privateListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:123456789012:listener/app/alb-private-dev/881aa8428c606707/539f0089fb48f000
       capacityProviderStrategies:
         - capacityProvider: FARGATE
           weight: 1
@@ -50,12 +45,12 @@ config:
           weight: 4
           base: 1
       services:
-        - name: gobc-sandbox
+        - name: app-sandbox
           public: true
           hosts:
-            - devapiaws.bookcabin.com
+            - devapi.graditya.com
           paths:
-            - /gobc-sandbox/*
+            - /app-sandbox/*
           HealthCheckPath: /api/ping
           stripPathPrefix: true
           priority: 1021
@@ -67,19 +62,19 @@ config:
             memoryTarget: 60
           monitoring:
             enabled: true
-            logGroupName: /ecs/gobc-sandbox-dev
+            logGroupName: /ecs/app-sandbox-dev
             unhandledLogPattern: "ERROR"
             latencySLASecs: 2.0
             desiredTaskCount: 1
             minHealthyHosts: 1
             cpuAlarmThreshold: 80
             memoryAlarmThreshold: 80
-        - name: gobc-travel
+        - name: app-travel
           public: true
           hosts:
-            - devapiaws.bookcabin.com
+            - devapi.graditya.com
           paths:
-            - /gobc-travel/*
+            - /app-travel/*
           HealthCheckPath: /health
           stripPathPrefix: true
           priority: 999
@@ -91,78 +86,13 @@ config:
             memoryTarget: 60
           monitoring:
             enabled: true
-            logGroupName: /ecs/gobc-travel-dev
+            logGroupName: /ecs/app-travel-dev
             unhandledLogPattern: "ERROR"
             latencySLASecs: 2.0
             desiredTaskCount: 1
             minHealthyHosts: 1
             cpuAlarmThreshold: 80
             memoryAlarmThreshold: 80
-        - name: managebooking
-          public: true
-          hosts:
-            - devapiaws.bookcabin.com
-          paths:
-            - /managebooking/*
-          HealthCheckPath: /ping
-          stripPathPrefix: false # TODO: check this
-          priority: 1012
-          port: 8080
-        - name: pkfare-flight
-          public: true
-          hosts:
-            - devapiaws.bookcabin.com
-          paths:
-            - /pkfare-flight/*
-          HealthCheckPath: /api/Search/HealthCheck
-          stripPathPrefix: true
-          priority: 1022
-          port: 8080
-          s3Buckets:
-            - st-ibe-pkfareflight-dev-apse1-01
-          autoscaling:
-            minCount: 1
-            maxCount: 3
-            cpuTarget: 60
-            memoryTarget: 60
-          monitoring:
-            enabled: true
-            logGroupName: /ecs/pkfare-flight-dev
-            unhandledLogPattern: "ERROR"
-            latencySLASecs: 2.0
-            desiredTaskCount: 1
-            minHealthyHosts: 1
-            cpuAlarmThreshold: 80
-            memoryAlarmThreshold: 80
-        - name: cithotel-search
-          public: false
-          hosts:
-            - cithotel-search-dev.internal.bookcabin.com
-          paths:
-            - /*
-          HealthCheckPath: /index.html
-          stripPathPrefix: false
-          priority: 104
-          port: 8080
-          s3Buckets:
-            - st-ibe-agoda-hotel-dev-apse1-01
-        - name: gobc-membership
-          public: true
-          hosts:
-            - devapiaws.bookcabin.com
-          paths:
-            - /gobc-membership/*
-          HealthCheckPath: /health
-          stripPathPrefix: true
-          priority: 1018
-          port: 8080
-          # monitoring:
-          #   enabled: true
-          #   logGroupName: /ecs/gobc-membership-dev
-          #   unhandledLogPattern: "ERROR"
-          #   latencySLASecs: 2.0
-          #   desiredTaskCount: 1
-          #   minHealthyHosts: 1
   notifications:endpoints:
     teams:
       enabled: true

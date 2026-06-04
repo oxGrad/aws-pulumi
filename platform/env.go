@@ -37,7 +37,7 @@ func env(ctx *pulumi.Context, cfg *stackCfg, provider *aws.Provider) error {
 		if !ok {
 			continue
 		}
-		ecsClusterName := fmt.Sprintf("bc-%s-cluster-%s", cluster.Name, ctx.Stack())
+		ecsClusterName := fmt.Sprintf("example-%s-cluster-%s", cluster.Name, ctx.Stack())
 
 		for _, svc := range cluster.Services {
 			if svc.Monitoring == nil || !svc.Monitoring.Enabled {
@@ -47,7 +47,7 @@ func env(ctx *pulumi.Context, cfg *stackCfg, provider *aws.Provider) error {
 			if !ok {
 				continue
 			}
-			resourceName := fmt.Sprintf("bc-%s-%s-%s", cluster.Name, svc.Name, ctx.Stack())
+			resourceName := fmt.Sprintf("example-%s-%s-%s", cluster.Name, svc.Name, ctx.Stack())
 			ecsServiceName := svc.Name
 
 			if err := composites.ProvisionServiceMonitoring(ctx, resourceName, composites.ServiceMonitoringArgs{

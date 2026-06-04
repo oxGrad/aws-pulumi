@@ -17,7 +17,7 @@
 | `platform/config.go` | Replace `Host string`/`Path string` with `Hosts []string`/`Paths []string`, add `StripPathPrefix bool` |
 | `platform/components/listener_rule.go` | Update `ListenerRuleArgs` to use `pulumi.StringArrayInput` for Hosts/Paths; add conditional `PathTransform` tag |
 | `platform/env.go` | Update call site: pass `pulumi.ToStringArray(svc.Hosts/Paths)`, pass `svc.StripPathPrefix`; fix default path fallback |
-| `platform/Pulumi.dev.yaml` | Migrate all services from `host`/`path` to `hosts`/`paths`; add `stripPathPrefix: true` for `gobc-sandbox` |
+| `platform/Pulumi.dev.yaml` | Migrate all services from `host`/`path` to `hosts`/`paths`; add `stripPathPrefix: true` for `app-sandbox` |
 | `platform/Pulumi.prod.yaml` | Migrate all services from `host`/`path` to `hosts`/`paths` |
 
 ---
@@ -145,7 +145,7 @@ func NewListenerRule(ctx *pulumi.Context, name string, args *ListenerRuleArgs, o
 }
 
 // stripPrefix returns the static prefix portion of a path pattern.
-// "/gobc-sandbox/*" → "/gobc-sandbox"
+// "/app-sandbox/*" → "/app-sandbox"
 func stripPrefix(pathPattern string) string {
 	idx := strings.Index(pathPattern, "*")
 	if idx < 0 {
@@ -185,7 +185,7 @@ In `platform/env.go`, replace the block that reads `svc.Host`, `svc.Path` with:
 
 ```go
 for _, svc := range cluster.Services {
-    resourceName := fmt.Sprintf("bc-%s-%s-%s", cluster.Name, svc.Name, ctx.Stack())
+    resourceName := fmt.Sprintf("example-%s-%s-%s", cluster.Name, svc.Name, ctx.Stack())
 
     paths := svc.Paths
     if len(paths) == 0 {
@@ -266,7 +266,7 @@ Replace the `cluster:clusters` section in `platform/Pulumi.dev.yaml`:
 ```yaml
   cluster:clusters:
     - name: frontend
-      listenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-public-dev/3058638beebb0b05/38fe39d69bb93911
+      listenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:123456789012:listener/app/alb-public-dev/3058638beebb0b05/38fe39d69bb93911
       capacityProviderStrategies:
         - capacityProvider: FARGATE
           weight: 1
@@ -277,30 +277,30 @@ Replace the `cluster:clusters` section in `platform/Pulumi.dev.yaml`:
       services:
         - name: esimtools
           hosts:
-            - dev-esimtools.bookcabin.com
+            - dev-esimtools.example.com
           paths:
             - /*
           priority: 1020
           port: 3000
-        - name: ota-bc-ui
+        - name: app-frontend
           hosts:
-            - dev-aws-v3.bookcabin.com
+            - dev-aws-v3.example.com
           paths:
             - /*
           priority: 800
           port: 3000
     - name: backend
-      listenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-public-dev/3058638beebb0b05/38fe39d69bb93911
+      listenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:123456789012:listener/app/alb-public-dev/3058638beebb0b05/38fe39d69bb93911
       capacityProviderStrategies:
         - capacityProvider: FARGATE_SPOT
           weight: 1
           base: 1
       services:
-        - name: gobc-sandbox
+        - name: app-sandbox
           hosts:
-            - devapiaws.bookcabin.com
+            - devapiaws.example.com
           paths:
-            - /gobc-sandbox/*
+            - /app-sandbox/*
           stripPathPrefix: true
           priority: 1021
           port: 8080
@@ -314,13 +314,13 @@ cd platform && pulumi preview --stack dev
 
 Expected output: the existing listener rules show as **unchanged** (same conditions, same priorities — only config format changed). If you see resource replacements for the listener rules, check that the `hosts`/`paths` values match what was previously in `host`/`path`.
 
-The `gobc-sandbox` rule should show an **update** (not replacement) adding tag `PathTransform: strip-prefix`.
+The `app-sandbox` rule should show an **update** (not replacement) adding tag `PathTransform: strip-prefix`.
 
 - [ ] **Step 3: Commit**
 
 ```bash
 git add platform/Pulumi.dev.yaml
-git commit -m "feat(platform/dev): migrate services to hosts/paths arrays, mark gobc-sandbox strip-prefix"
+git commit -m "feat(platform/dev): migrate services to hosts/paths arrays, mark app-sandbox strip-prefix"
 ```
 
 ---

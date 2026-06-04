@@ -7,8 +7,8 @@ config:
   cluster:clusters:
     - name: frontend
       shortName: fe
-      publicListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-public-prd-ibe-01/7cd642592ad7e058/bf5451adc14c2f8b
-      privateListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-private-prd-ibe-01/f318ddae9f3ac537/fd79817d6b64c9d6
+      publicListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:123456789012:listener/app/alb-public-prd-ibe-01/7cd642592ad7e058/bf5451adc14c2f8b
+      privateListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:123456789012:listener/app/alb-private-prd-ibe-01/f318ddae9f3ac537/fd79817d6b64c9d6
       capacityProviderStrategies:
         - capacityProvider: FARGATE
           weight: 1
@@ -20,15 +20,15 @@ config:
         - name: esimtools
           public: true
           hosts:
-            - esimvoucher.bookcabin.com
+            - esimvoucher.example.com
           paths:
             - /*
           priority: 8
           port: 3000
     - name: backend
       shortName: be
-      publicListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-public-prd-ibe-01/7cd642592ad7e058/bf5451adc14c2f8b # alb-public-prd-ibe-01
-      privateListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-private-prd-ibe-02/6b0498e616ae28a1/a180f7d97dc83f42 # alb-private-prd-ibe-02
+      publicListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:123456789012:listener/app/alb-public-prd-ibe-01/7cd642592ad7e058/bf5451adc14c2f8b # alb-public-prd-ibe-01
+      privateListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:123456789012:listener/app/alb-private-prd-ibe-02/6b0498e616ae28a1/a180f7d97dc83f42 # alb-private-prd-ibe-02
       capacityProviderStrategies:
         - capacityProvider: FARGATE
           weight: 1
@@ -37,22 +37,22 @@ config:
           weight: 0
           base: 0
       services:
-        - name: gobc-sandbox
+        - name: app-sandbox
           public: true
           hosts:
-            - api-ibe.bookcabin.com
+            - api-ibe.example.com
           paths:
-            - /gobc-sandbox/*
+            - /app-sandbox/*
           HealthCheckPath: /api/ping
           stripPathPrefix: true
           priority: 1021
           port: 8080
-        - name: gobc-travel
+        - name: app-travel
           public: true
           hosts:
-            - api-ibe.bookcabin.com
+            - api-ibe.example.com
           paths:
-            - /gobc-travel/*
+            - /app-travel/*
           HealthCheckPath: /health
           stripPathPrefix: true
           priority: 50
@@ -64,7 +64,7 @@ config:
             memoryTarget: 60
           monitoring:
             enabled: true
-            logGroupName: /ecs/gobc-travel-prod
+            logGroupName: /ecs/app-travel-prod
             unhandledLogPattern: "ERROR"
             latencySLASecs: 2.0
             desiredTaskCount: 1
@@ -74,7 +74,7 @@ config:
         - name: pkfare-flight
           public: true
           hosts:
-            - api-ibe.bookcabin.com
+            - api-ibe.example.com
           paths:
             - /pkfare-flight/*
           HealthCheckPath: /api/Search/HealthCheck
@@ -100,7 +100,7 @@ config:
         - name: cithotel-search
           public: false
           hosts:
-            - cithotel-search.internal.bookcabin.com
+            - cithotel-search.internal.example.com
           paths:
             - /*
           HealthCheckPath: /index.html

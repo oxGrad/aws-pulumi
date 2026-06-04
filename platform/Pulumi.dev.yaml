@@ -7,8 +7,8 @@ config:
   cluster:clusters:
     - name: frontend
       shortName: fe
-      publicListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-public-dev/3058638beebb0b05/38fe39d69bb93911
-      privateListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-private-dev/881aa8428c606707/539f0089fb48f000
+      publicListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:123456789012:listener/app/alb-public-dev/3058638beebb0b05/38fe39d69bb93911
+      privateListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:123456789012:listener/app/alb-private-dev/881aa8428c606707/539f0089fb48f000
       capacityProviderStrategies:
         - capacityProvider: FARGATE
           weight: 1
@@ -20,28 +20,28 @@ config:
         - name: esimtools
           public: true
           # hosts:
-          #   - dev-aws.bookcabin.com
+          #   - dev-aws.example.com
           # paths:
           #   - /esim/voucher/*
           # stripPathPrefix: true
           hosts:
-            - dev-esimtools.bookcabin.com
+            - dev-esimtools.example.com
           paths:
             - /*
           priority: 1020
           port: 3000
-        - name: ota-bc-ui
+        - name: app-frontend
           public: true
           hosts:
-            - dev-aws-v3.bookcabin.com
+            - dev-aws-v3.example.com
           paths:
             - /*
           priority: 800
           port: 3000
     - name: backend
       shortName: be
-      publicListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-public-dev/3058638beebb0b05/38fe39d69bb93911
-      privateListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:626883896657:listener/app/alb-private-dev/881aa8428c606707/539f0089fb48f000
+      publicListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:123456789012:listener/app/alb-public-dev/3058638beebb0b05/38fe39d69bb93911
+      privateListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:123456789012:listener/app/alb-private-dev/881aa8428c606707/539f0089fb48f000
       capacityProviderStrategies:
         - capacityProvider: FARGATE
           weight: 1
@@ -50,12 +50,12 @@ config:
           weight: 4
           base: 1
       services:
-        - name: gobc-sandbox
+        - name: app-sandbox
           public: true
           hosts:
-            - devapiaws.bookcabin.com
+            - devapiaws.example.com
           paths:
-            - /gobc-sandbox/*
+            - /app-sandbox/*
           HealthCheckPath: /api/ping
           stripPathPrefix: true
           priority: 1021
@@ -67,19 +67,19 @@ config:
             memoryTarget: 60
           monitoring:
             enabled: true
-            logGroupName: /ecs/gobc-sandbox-dev
+            logGroupName: /ecs/app-sandbox-dev
             unhandledLogPattern: "ERROR"
             latencySLASecs: 2.0
             desiredTaskCount: 1
             minHealthyHosts: 1
             cpuAlarmThreshold: 80
             memoryAlarmThreshold: 80
-        - name: gobc-travel
+        - name: app-travel
           public: true
           hosts:
-            - devapiaws.bookcabin.com
+            - devapiaws.example.com
           paths:
-            - /gobc-travel/*
+            - /app-travel/*
           HealthCheckPath: /health
           stripPathPrefix: true
           priority: 999
@@ -91,7 +91,7 @@ config:
             memoryTarget: 60
           monitoring:
             enabled: true
-            logGroupName: /ecs/gobc-travel-dev
+            logGroupName: /ecs/app-travel-dev
             unhandledLogPattern: "ERROR"
             latencySLASecs: 2.0
             desiredTaskCount: 1
@@ -101,7 +101,7 @@ config:
         - name: managebooking
           public: true
           hosts:
-            - devapiaws.bookcabin.com
+            - devapiaws.example.com
           paths:
             - /managebooking/*
           HealthCheckPath: /ping
@@ -111,7 +111,7 @@ config:
         - name: pkfare-flight
           public: true
           hosts:
-            - devapiaws.bookcabin.com
+            - devapiaws.example.com
           paths:
             - /pkfare-flight/*
           HealthCheckPath: /api/Search/HealthCheck
@@ -137,7 +137,7 @@ config:
         - name: cithotel-search
           public: false
           hosts:
-            - cithotel-search-dev.internal.bookcabin.com
+            - cithotel-search-dev.internal.example.com
           paths:
             - /*
           HealthCheckPath: /index.html
@@ -146,19 +146,19 @@ config:
           port: 8080
           s3Buckets:
             - st-ibe-agoda-hotel-dev-apse1-01
-        - name: gobc-membership
+        - name: app-membership
           public: true
           hosts:
-            - devapiaws.bookcabin.com
+            - devapiaws.example.com
           paths:
-            - /gobc-membership/*
+            - /app-membership/*
           HealthCheckPath: /health
           stripPathPrefix: true
           priority: 1018
           port: 8080
           # monitoring:
           #   enabled: true
-          #   logGroupName: /ecs/gobc-membership-dev
+          #   logGroupName: /ecs/app-membership-dev
           #   unhandledLogPattern: "ERROR"
           #   latencySLASecs: 2.0
           #   desiredTaskCount: 1

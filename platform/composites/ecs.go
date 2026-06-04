@@ -167,7 +167,7 @@ func ProvisionECS(ctx *pulumi.Context, args ProvisionECSArgs, provider *aws.Prov
 	}
 
 	for _, cluster := range args.Clusters {
-		clusterName := fmt.Sprintf("bc-%s-cluster-%s", cluster.Name, ctx.Stack())
+		clusterName := fmt.Sprintf("example-%s-cluster-%s", cluster.Name, ctx.Stack())
 
 		ecsCluster, err := components.NewECSCluster(ctx, clusterName, &components.ECSClusterArgs{
 			ClusterName:                pulumi.String(clusterName),
@@ -188,7 +188,7 @@ func ProvisionECS(ctx *pulumi.Context, args ProvisionECSArgs, provider *aws.Prov
 		}
 
 		for _, svc := range cluster.Services {
-			resourceName := fmt.Sprintf("bc-%s-%s-%s", clusterShortName, svc.Name, ctx.Stack())
+			resourceName := fmt.Sprintf("example-%s-%s-%s", clusterShortName, svc.Name, ctx.Stack())
 
 			if svc.Name == "" {
 				return nil, fmt.Errorf("cluster %q has a service with an empty name", cluster.Name)

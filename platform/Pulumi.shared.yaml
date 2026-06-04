@@ -3,4 +3,4 @@ config:
   aws:region: ap-southeast-1
   ci:azureUser: azure-ci
   ci:createAzureUserAccessKey: false
-  ci:kmsARN: arn:aws:kms:ap-southeast-1:626883896657:key/7669a297-fee8-4ce1-978e-b72b091368cf
+  ci:kmsARN: arn:aws:kms:ap-southeast-1:123456789012:key/7669a297-fee8-4ce1-978e-b72b091368cf

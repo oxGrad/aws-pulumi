@@ -31,7 +31,7 @@ pulumi stack select dev
 ```
 
 AWS profile used: `pulumi-executor` (set in `aws:profile` config).  
-State backend: `s3://bc-sre-pulumi-state` (ap-southeast-1).
+State backend: `s3://example-pulumi-state` (ap-southeast-1).
 
 ## Platform Architecture
 

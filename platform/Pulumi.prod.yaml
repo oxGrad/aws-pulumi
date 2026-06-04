@@ -17,18 +17,27 @@ config:
           weight: 0
           base: 0
       services:
-        - name: esimtools
+        - name: customer
           public: true
           hosts:
-            - esimvoucher.example.com
+            - customer.graditya.com
+          paths:
+            - /*
+          priority: 8
+          port: 3000
+      services:
+        - name: landing-page
+          public: true
+          hosts:
+            - landing.graditya.com
           paths:
             - /*
           priority: 8
           port: 3000
     - name: backend
       shortName: be
-      publicListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:123456789012:listener/app/alb-public-prd-ibe-01/7cd642592ad7e058/bf5451adc14c2f8b # alb-public-prd-ibe-01
-      privateListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:123456789012:listener/app/alb-private-prd-ibe-02/6b0498e616ae28a1/a180f7d97dc83f42 # alb-private-prd-ibe-02
+      publicListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:123456789012:listener/app/alb-public-prd-ibe-01/7cd642592ad7e058/bf5451adc14c2f8b
+      privateListenerARN: arn:aws:elasticloadbalancing:ap-southeast-1:123456789012:listener/app/alb-private-prd-ibe-02/6b0498e616ae28a1/a180f7d97dc83f42
       capacityProviderStrategies:
         - capacityProvider: FARGATE
           weight: 1
@@ -40,7 +49,7 @@ config:
         - name: app-sandbox
           public: true
           hosts:
-            - api-ibe.example.com
+            - api.graditya.com
           paths:
             - /app-sandbox/*
           HealthCheckPath: /api/ping
@@ -50,7 +59,7 @@ config:
         - name: app-travel
           public: true
           hosts:
-            - api-ibe.example.com
+            - api.graditya.com
           paths:
             - /app-travel/*
           HealthCheckPath: /health
@@ -71,56 +80,6 @@ config:
             minHealthyHosts: 1
             cpuAlarmThreshold: 80
             memoryAlarmThreshold: 80
-        - name: pkfare-flight
-          public: true
-          hosts:
-            - api-ibe.example.com
-          paths:
-            - /pkfare-flight/*
-          HealthCheckPath: /api/Search/HealthCheck
-          stripPathPrefix: true
-          priority: 1022
-          port: 8080
-          s3Buckets:
-            - st-ibe-pkfareflight-prd-apse1-01
-          autoscaling:
-            minCount: 1
-            maxCount: 5
-            cpuTarget: 60
-            memoryTarget: 60
-          monitoring:
-            enabled: true
-            logGroupName: /ecs/pkfare-flight-prod
-            unhandledLogPattern: "ERROR"
-            latencySLASecs: 2.0
-            desiredTaskCount: 1
-            minHealthyHosts: 1
-            cpuAlarmThreshold: 80
-            memoryAlarmThreshold: 80
-        - name: cithotel-search
-          public: false
-          hosts:
-            - cithotel-search.internal.example.com
-          paths:
-            - /*
-          HealthCheckPath: /index.html
-          stripPathPrefix: false
-          priority: 104
-          port: 8080
-          # autoscaling:
-          #   minCount: 1
-          #   maxCount: 5
-          #   cpuTarget: 60
-          #   memoryTarget: 60
-          # monitoring:
-          #   enabled: true
-          #   logGroupName: /ecs/cithotel-search-prod
-          #   unhandledLogPattern: "ERROR"
-          #   latencySLASecs: 2.0
-          #   desiredTaskCount: 1
-          #   minHealthyHosts: 1
-          #   cpuAlarmThreshold: 80
-          #   memoryAlarmThreshold: 80
   notifications:endpoints:
     teams:
       enabled: true

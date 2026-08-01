@@ -43,7 +43,7 @@ State backend: `s3://example-pulumi-state` (ap-southeast-1).
 
 1. **Service Connect** — creates AWS Cloud Map HTTP namespaces for ECS service discovery.
 2. **`ProvisionECS`** — the main workhorse (see below).
-3. **`ProvisionNotifications`** — creates two SNS topics per env: `bc-{stack}-critical` and `bc-{stack}-warning`.
+3. **`ProvisionNotifications`** — creates two SNS topics per env: `example-{stack}-critical` and `example-{stack}-warning`.
 4. **`ProvisionServiceMonitoring`** — for each service with `monitoring.enabled: true`, wires up CloudWatch alarms pointing at the SNS topics.
 
 ### `ProvisionECS` (`composites/ecs.go`)
@@ -56,10 +56,10 @@ Iterates `cluster:clusters` config in three passes:
 
 ### Naming conventions
 
-- ECS cluster: `bc-{cluster.Name}-cluster-{stack}`
-- Target group / listener rule resource: `bc-{cluster.ShortName}-{svc.Name}-{stack}` — **max 32 chars** (AWS limit). `ShortName` is required in stack config to keep names short (e.g. `fe`, `be`).
-- IAM roles: `{svc.Name}-{stack}-execution-role` / `{svc.Name}-{stack}-task-role`
-- SNS topics: `bc-{stack}-critical`, `bc-{stack}-warning`
+- ECS cluster: `example-{cluster.Name}-cluster-{stack}`
+- Target group / listener rule resource: `example-{cluster.ShortName}-{svc.Name}-{stack}` — **max 32 chars** (AWS limit). `ShortName` is required in stack config to keep names short (e.g. `fe`, `be`).
+- IAM roles: `{svc.Name}-{stack}-execution` / `{svc.Name}-{stack}-task`
+- SNS topics: `example-{stack}-critical`, `example-{stack}-warning`
 
 ### Two-layer abstraction
 

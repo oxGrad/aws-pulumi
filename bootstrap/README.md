@@ -20,26 +20,26 @@ This project provisions the foundational infrastructure required to manage Pulum
 ## Architecture Overview
 
 ```
-┌─────────────────────────────────────────────┐
-│                AWS Account                  │
-│                                             │
-│  ┌──────────────┐    ┌───────────────────┐  │
-│  │  KMS Key     │    │  S3 Bucket        │  │
-│  │  pulumi-     │◄───│  bc-pulumi-state  │  │
-│  │  state-key   │    │  (versioned)      │  │
-│  └──────┬───────┘    └───────────────────┘  │
-│         │                     ▲             │
-│         │                     │             │
-│  ┌──────▼────────────────────┐│             │
-│  │  IAM Role: pulumi-executor││             │
-│  │  - S3 read/write          ├┘             │
-│  │  - KMS encrypt/decrypt    │              │
-│  └──────────────▲────────────┘              │
-│                 │ sts:AssumeRole            │
-│  ┌──────────────┴───────────┐               │
-│  │  IAM User: pulumi-ci     │               │
-│  └──────────────────────────┘               │
-└─────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────┐
+│                   AWS Account                     │
+│                                                   │
+│  ┌──────────────┐    ┌─────────────────────────┐  │
+│  │  KMS Key     │    │  S3 Bucket              │  │
+│  │  pulumi-     │◄───│  example-pulumi-state   │  │
+│  │  state-key   │    │  (versioned)            │  │
+│  └──────┬───────┘    └─────────────────────────┘  │
+│         │                       ▲                 │
+│         │                       │                 │
+│  ┌──────▼──────────────────────┐│                 │
+│  │  IAM Role: pulumi-executor  ││                 │
+│  │  - S3 read/write            ├┘                 │
+│  │  - KMS encrypt/decrypt      │                  │
+│  └──────────────▲──────────────┘                  │
+│                 │ sts:AssumeRole                  │
+│  ┌──────────────┴───────────┐                     │
+│  │  IAM User: pulumi-ci     │                     │
+│  └──────────────────────────┘                     │
+└───────────────────────────────────────────────────┘
 
 iam.NewAccessKey()
         │

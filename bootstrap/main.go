@@ -45,7 +45,7 @@ func main() {
 		}
 
 		// -------------------------------------------------------
-		// 2. S3 Bucket: bc-pulumi-state
+		// 2. S3 Bucket: example-pulumi-state
 		// -------------------------------------------------------
 		bucket, err := components.NewStateBucket(ctx, cfg.bucketName, &components.StateBucketArgs{
 			BucketName: pulumi.String(cfg.bucketName),

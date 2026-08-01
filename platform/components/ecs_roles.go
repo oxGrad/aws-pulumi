@@ -70,7 +70,7 @@ func NewECSRoles(ctx *pulumi.Context, name string, args *ECSRolesArgs, opts ...p
 			{
 				"Effect":   "Allow",
 				"Action":   []string{"secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret", "secretsmanager:ListSecretVersionIds"},
-				"Resource": "*",
+				"Resource": fmt.Sprintf("arn:aws:secretsmanager:%s:%s:secret:%s/%s/*", args.Region, args.AccountID, args.ServiceName, args.Stack),
 			},
 		},
 	})
@@ -116,7 +116,7 @@ func NewECSRoles(ctx *pulumi.Context, name string, args *ECSRolesArgs, opts ...p
 		{
 			"Effect":   "Allow",
 			"Action":   []string{"secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret", "secretsmanager:ListSecretVersionIds"},
-			"Resource": "*",
+			"Resource": fmt.Sprintf("arn:aws:secretsmanager:%s:%s:secret:%s/%s/*", args.Region, args.AccountID, args.ServiceName, args.Stack),
 		},
 		{
 			"Effect":   "Allow",
@@ -149,8 +149,12 @@ func NewECSRoles(ctx *pulumi.Context, name string, args *ECSRolesArgs, opts ...p
 			"Effect": "Allow",
 			"Action": []string{
 				"sns:Publish",
-				"sns:ListTopics",
 			},
+			"Resource": fmt.Sprintf("arn:aws:sns:%s:%s:%s-%s-*", args.Region, args.AccountID, args.ServiceName, args.Stack),
+		},
+		{
+			"Effect":   "Allow",
+			"Action":   []string{"sns:ListTopics"},
 			"Resource": "*",
 		},
 	}

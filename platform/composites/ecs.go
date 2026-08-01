@@ -43,6 +43,9 @@ type ClusterConfig struct {
 	PrivateListenerARN         string                                `json:"privateListenerARN"`
 	Services                   []ServiceConfig                       `json:"services"`
 	CapacityProviderStrategies []components.CapacityProviderStrategy `json:"capacityProviderStrategies"`
+	// SkipIAMRoles skips execution/task role creation for this cluster's services,
+	// e.g. for static-asset frontends that don't run ECS tasks needing IAM permissions.
+	SkipIAMRoles bool `json:"skipIAMRoles,omitempty"`
 }
 
 type ProvisionECSArgs struct {
@@ -97,17 +100,6 @@ func ProvisionECS(ctx *pulumi.Context, args ProvisionECSArgs, provider *aws.Prov
 		return nil, fmt.Errorf("error creating ECR provider: %w", err)
 	}
 
-	// Build cache ECR repository — dev only, uses env-agnostic provider (no Environment tag).
-	// if ctx.Stack() == "dev" {
-	// 	cacheRepo, err := components.NewBuildCacheECRRepository(ctx, "build-cache", &components.BuildCacheECRRepositoryArgs{
-	// 		Name: pulumi.String("build-cache"),
-	// 	}, pulumi.Provider(envAgnosticProvider))
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	ctx.Export("buildCacheECRURL", cacheRepo.URL)
-	// }
-
 	// ECR repositories — one per unique service name across all clusters.
 	// Repos are created in dev and looked up in all other stacks.
 	provisionedECR := map[string]bool{}
@@ -145,8 +137,7 @@ func ProvisionECS(ctx *pulumi.Context, args ProvisionECSArgs, provider *aws.Prov
 	provisionedRoles := map[string]bool{}
 	for _, cluster := range args.Clusters {
 		for _, svc := range cluster.Services {
-			// NOTE: Skip task and execution roles creation for "frontend" cluster
-			if cluster.Name == "frontend" || svc.Name == "" || provisionedRoles[svc.Name] {
+			if cluster.SkipIAMRoles || svc.Name == "" || provisionedRoles[svc.Name] {
 				continue
 			}
 			provisionedRoles[svc.Name] = true

@@ -14,8 +14,10 @@ func shared(ctx *pulumi.Context, cfg *stackCfg, provider *aws.Provider) error {
 	// IAM User: azure-ci
 	// -------------------------------------------------------
 	azureCIUser, err := components.NewAzureCIUser(ctx, "azure-ci", &components.AzureCIUserArgs{
-		User:   pulumi.String(cfg.azureCIUser),
-		KmsARN: pulumi.String(cfg.kmsARN),
+		User:      pulumi.String(cfg.azureCIUser),
+		KmsARN:    pulumi.String(cfg.kmsARN),
+		Region:    cfg.awsRegion,
+		AccountID: cfg.identity.AccountId,
 	}, pulumi.Provider(provider))
 	if err != nil {
 		return err

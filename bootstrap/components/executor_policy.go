@@ -30,11 +30,10 @@ func NewExecutorPolicy(ctx *pulumi.Context, name string, args *ExecutorPolicyArg
 		return nil, err
 	}
 
-	ExecutorPolicyDoc := pulumi.All(args.BucketARN, args.KmsARN).ApplyT(func(args []interface{}) (string, error) {
+	ExecutorPolicyDoc := pulumi.All(args.BucketARN, args.KmsARN).ApplyT(func(args []any) (string, error) {
 		bucketArn := args[0]
 		kmsArn := args[1]
 
-		ctx.Log.Info(fmt.Sprintf("kmsARN: %s", kmsArn), nil)
 		doc := map[string]any{
 			"Version": "2012-10-17",
 			"Statement": []map[string]any{

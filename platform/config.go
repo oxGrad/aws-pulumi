@@ -11,6 +11,7 @@ import (
 
 type stackCfg struct {
 	identity                 *aws.GetCallerIdentityResult
+	awsRegion                string
 	azureCIUser              string
 	createAzureUserAccessKey bool
 	kmsARN                   string
@@ -39,6 +40,8 @@ func loadConfig(ctx *pulumi.Context) (*stackCfg, error) {
 		sCfg.platformManagedBy = platformCfg.Get("managedby")
 		sCfg.platformSource = platformCfg.Get("source")
 	}
+
+	sCfg.awsRegion = config.New(ctx, "aws").Get("region")
 
 	switch ctx.Stack() {
 	case "shared":

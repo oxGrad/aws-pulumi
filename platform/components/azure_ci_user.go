@@ -14,8 +14,10 @@ type AzureCIUser struct {
 }
 
 type AzureCIUserArgs struct {
-	User   pulumi.StringInput
-	KmsARN pulumi.StringInput
+	User      pulumi.StringInput
+	KmsARN    pulumi.StringInput
+	Region    string
+	AccountID string
 }
 
 const (
@@ -65,7 +67,7 @@ func NewAzureCIUser(ctx *pulumi.Context, name string, args *AzureCIUserArgs, opt
 					"ecr:CompleteLayerUpload",
 					"ecr:PutImage",
 				},
-				"Resource": "*",
+				"Resource": fmt.Sprintf("arn:aws:ecr:%s:%s:repository/*", args.Region, args.AccountID),
 			},
 			{
 				"Sid":    "ECSTaskDefinition",
@@ -75,7 +77,10 @@ func NewAzureCIUser(ctx *pulumi.Context, name string, args *AzureCIUserArgs, opt
 					"ecs:DescribeTaskDefinition",
 					"ecs:TagResource",
 				},
-				"Resource": "*",
+				// Task definitions aren't ARN-addressable by family name at request time
+				// (RegisterTaskDefinition has no resource ARN yet), so this is scoped to
+				// account/region rather than a naming prefix.
+				"Resource": fmt.Sprintf("arn:aws:ecs:%s:%s:task-definition/*", args.Region, args.AccountID),
 			},
 			{
 				"Sid":    "ECSService",
@@ -86,7 +91,7 @@ func NewAzureCIUser(ctx *pulumi.Context, name string, args *AzureCIUserArgs, opt
 					"ecs:DeleteService",
 					"ecs:DescribeServices",
 				},
-				"Resource": "*",
+				"Resource": fmt.Sprintf("arn:aws:ecs:%s:%s:service/example-*-cluster-*/*", args.Region, args.AccountID),
 			},
 			{
 				"Sid":    "ECSCluster",
@@ -97,13 +102,13 @@ func NewAzureCIUser(ctx *pulumi.Context, name string, args *AzureCIUserArgs, opt
 					"ecs:UpdateCluster",
 					"ecs:DescribeClusters",
 				},
-				"Resource": "*",
+				"Resource": fmt.Sprintf("arn:aws:ecs:%s:%s:cluster/example-*-cluster-*", args.Region, args.AccountID),
 			},
 			{
 				"Sid":      "PassRoleToECS",
 				"Effect":   "Allow",
 				"Action":   "iam:PassRole",
-				"Resource": "*",
+				"Resource": fmt.Sprintf("arn:aws:iam::%s:role/ecs/*", args.AccountID),
 				"Condition": map[string]any{
 					"StringEquals": map[string]string{
 						"iam:PassedToService": "ecs-tasks.amazonaws.com",
@@ -117,7 +122,7 @@ func NewAzureCIUser(ctx *pulumi.Context, name string, args *AzureCIUserArgs, opt
 					"ecs:DescribeTasks",
 					"ecs:ListTasks",
 				},
-				"Resource": "*",
+				"Resource": fmt.Sprintf("arn:aws:ecs:%s:%s:task/example-*-cluster-*/*", args.Region, args.AccountID),
 			},
 			{
 				"Sid":    "SSMParameterAccess",
@@ -129,7 +134,7 @@ func NewAzureCIUser(ctx *pulumi.Context, name string, args *AzureCIUserArgs, opt
 					"ssm:AddTagsToResource",
 					"ssm:ListTagsForResource",
 				},
-				"Resource": "*",
+				"Resource": fmt.Sprintf("arn:aws:ssm:%s:%s:parameter/*", args.Region, args.AccountID),
 			},
 			{
 				"Sid":    "CloudWatchLogsAccess",
@@ -142,7 +147,7 @@ func NewAzureCIUser(ctx *pulumi.Context, name string, args *AzureCIUserArgs, opt
 					"logs:DescribeLogStreams",
 					"logs:TagResource",
 				},
-				"Resource": "*",
+				"Resource": fmt.Sprintf("arn:aws:logs:%s:%s:log-group:*", args.Region, args.AccountID),
 			},
 		},
 	})

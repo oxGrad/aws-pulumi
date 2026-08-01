@@ -51,7 +51,7 @@ State backend: `s3://example-pulumi-state` (ap-southeast-1).
 Iterates `cluster:clusters` config in three passes:
 
 1. **ECR repos** — created in `dev`, looked up (not created) in all other stacks. One repo per unique service name across all clusters.
-2. **IAM roles** — one execution + task role pair per unique service name. Skipped entirely for the `"frontend"` cluster.
+2. **IAM roles** — one execution + task role pair per unique service name. Skipped entirely for clusters with `skipIAMRoles: true` (e.g. `frontend`).
 3. **ECS cluster + services** — per cluster, creates the ECS cluster then for each service: a target group and ALB listener rule.
 
 ### Naming conventions
@@ -74,6 +74,7 @@ cluster:clusters:
     shortName: be          # used in target group names (required, max ~4 chars)
     publicListenerARN: ... # ALB listener for public services
     privateListenerARN: ...# ALB listener for private services
+    skipIAMRoles: false    # optional; true skips execution/task role creation for this cluster
     capacityProviderStrategies: [...]
     services:
       - name: my-service
